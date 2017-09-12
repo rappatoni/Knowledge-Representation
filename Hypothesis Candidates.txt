@@ -1,0 +1,26 @@
+List of possible hypotheses:
+
+Search vs Inference:
+
+	"Sudokus involving search are more/less difficult for humans than a computer."
+
+	"Sudokus involving search are more/less difficult for SAT solvers of class X  than SAT solvers of class Y."
+
+Snake Sudoku:
+	
+	"Snake Sudoku, i.e. varying the shape of the "boxes" negatively affects human performance solving Sudokus
+	but not computer performance."
+
+Encoding:
+	
+	"The more powerful/expressive the encoding, the less efficient for SAT solvers."
+
+Number of givens:
+
+	"Number of steps increases with less givens for well-formed Sudokus but decreases for non-well-formed Sudokus"
+
+Nested Sudokus:
+
+	"SAT solvers are more efficient at solving nested Sudokus than normal Sudokus."
+
+	 
