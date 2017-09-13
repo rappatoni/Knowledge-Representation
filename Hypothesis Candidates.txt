@@ -2,26 +2,26 @@ List of possible hypotheses:
 
 Search vs Inference:
 
-	"Sudokus involving search are more/less difficult for humans than a computer."
+	"Sudokus involving search are more/less difficult for humans than a computer." no
 
-	"Sudokus involving search are more/less difficult for SAT solvers of class X  than SAT solvers of class Y."
+	"Sudokus involving search are more/less difficult for SAT solvers of class X  than SAT solvers of class Y." no
 
-Snake Sudoku:
+Snake/Killer Sudoku:
 	
-	"Snake Sudoku, i.e. varying the shape of the "boxes" negatively affects human performance solving Sudokus
-	but not computer performance."
+	"Snake/Killer Sudoku, i.e. varying the shape of the "boxes" negatively affects human performance solving Sudokus
+	but not computer performance." Maybe
 
 Encoding:
 	
-	"The more powerful/expressive the encoding, the less efficient for SAT solvers."
+	"The more powerful/expressive the encoding, the less efficient for SAT solvers." Difficult
 
 Number of givens:
 
-	"Number of steps increases with less givens for well-formed Sudokus but decreases for non-well-formed Sudokus"
+	"Number of steps increases with less givens for well-formed Sudokus but decreases for non-well-formed Sudokus" Obvious
 
 Nested Sudokus:
 
-	"SAT solvers are more efficient at solving nested Sudokus than normal Sudokus."
+	"SAT solvers are more efficient at solving nested Sudokus than normal Sudokus." Obvious
 
 Symmetry groups/Equivalence Classes
 
@@ -29,7 +29,7 @@ Symmetry groups/Equivalence Classes
 https://en.wikipedia.org/wiki/Mathematics_of_Sudoku#Enumerating_essentially_different_Sudoku_solutions
 http://www.math.cornell.edu/~mec/Summer2009/Mahmood/Symmetry.html)
 
-	"Sudokus belonging to one equivalence class have different difficulties for SAT-solvers."
+	"Sudokus belonging to one equivalence class have different difficulties for SAT-solvers." Most probably false
 	"Is there a way to reliably identify the simplest Sudoku in one equivalence class?"
 	"Transforming a Sudoku before solving can safe computational expense."
 	"It pays off computationally to transform a Sudoku to the simplest in its class before solving it."
