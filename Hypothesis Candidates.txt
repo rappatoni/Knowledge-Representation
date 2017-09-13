@@ -23,4 +23,12 @@ Nested Sudokus:
 
 	"SAT solvers are more efficient at solving nested Sudokus than normal Sudokus."
 
+Symmetry/Equivalence Classes
+
+(Sudokus are essentially the same (equivalent) if they can be derived from one another through certain Sudoku preserving operations
+https://en.wikipedia.org/wiki/Mathematics_of_Sudoku#Enumerating_essentially_different_Sudoku_solutions)
+
+	"Sudokus belonging to one equivalence class have different difficulties for SAT-solvers."
+	"Is there a way to reliably identify the simplest Sudoku in one equivalence class?"
+	"It pays off computationally to transform a Sudoku to the simplest in its class before solving it."
 	 
