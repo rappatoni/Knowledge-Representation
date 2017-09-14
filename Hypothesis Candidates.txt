@@ -51,6 +51,28 @@ clauses and larger input size. Thus a hypothesis to be investigated could be:
 	"For low numbers of variables (e.g. 3x3 Sudokus) SAT-performance can be increased by adding redundant constraints. 
 	For high numbers of variables (e.g. 81x81 Sudoku) SAT-performance suffers from adding redundant constraints."
 
+A related hypothesis would be:
+
+	"The redundant constraints that lead to the greatest efficiency improvement are the ones that are most often added as clauses during 
+	non-chronological backtracking."
+
+E.g.: a modified diplomatic puzzle
+
+Let's say the foreign policy of the country has the following axioms:
+
+P'+Q'
+Q'+R'
+R+P
+
+In addition the king wants
+
+Q+R
+
+Let's say we split by trying Q. Then the axioms lead to a contradiction. That means, Q' is actually an axiom itself. No matter what the king
+or the crown prince or anybody else wants, that will always hold. So it is redundant to check this every time when writing invitations for a 
+diplomatic dinner. So it would be good if our algorithm could learn this.
+
+
 http://4c.ucc.ie/~hsimonis/sudoku.pdf contains some redundant constraints. In addition I have thought of the following:
 
 	For each possible box of 9, at least 6 cells are different.
