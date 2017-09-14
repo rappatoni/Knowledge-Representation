@@ -33,4 +33,41 @@ http://www.math.cornell.edu/~mec/Summer2009/Mahmood/Symmetry.html)
 	"Is there a way to reliably identify the simplest Sudoku in one equivalence class?"
 	"Transforming a Sudoku before solving can safe computational expense."
 	"It pays off computationally to transform a Sudoku to the simplest in its class before solving it."
+
+Redundant constraints
+
+https://lirias.kuleuven.be/bitstream/123456789/353637/1/sudokutplp.pdf investigate to remove constraints from Sudokus (individually
+not generally if I understand correctly). They find that: "Redundant constraints are very often good for the performance of CP systems,
+and indeed, all solvers we checked perform much slower (about a factor 2000) with a minimal set of big constraints." In addition,
+http://4c.ucc.ie/~hsimonis/sudoku.pdf finds that additional redundant constraints positively affect the efficiency of CP solvers.
+The question is, is this also the case for SAT solvers? There is some evidence that points in this direction: 
+http://anytime.cs.umass.edu/aimath06/proceedings/P34.pdf finds that an extended encoding (thus containing redundant clauses) leads to
+SAT solvers being able to more reliably solve Sudokus without search (using merely inference). http://www.cs.cmu.edu/~hjain/papers/sudoku-as-SAT.pdf
+finds with respect to that extended encoding: " It is easy to see that the extended encoding which adds redundant clauses to the minimal encoding 
+shows the best performance among the three encodings." However, they also find that "TheruntimeofaSATsolverishighlyrelatedtotheinputformulasize,
+especially, when the input formula size is in gigabytes." So there is likely a trade-off between better inference due to redundant
+clauses and larger input size. Thus a hypothesis to be investigated could be:
+
+	"For low numbers of variables (e.g. 3x3 Sudokus) SAT-performance can be increased by adding redundant constraints. 
+	For high numbers of variables (e.g. 81x81 Sudoku) SAT-performance suffers from adding redundant constraints."
+
+http://4c.ucc.ie/~hsimonis/sudoku.pdf contains some redundant constraints. In addition I have thought of the following:
+
+	For each possible box of 9, at least 6 cells are different.
+	For the diagonals, at least 3 cells are different.
+	There can be at most 3 diagonal neighbours
+	No two neighbouring boxes (non-diagonally) can be the same
+	...
+
+I also think there might be very interesting follow up investigations which we should discuss such as:
+	
+	What's the effect of redundant constrants on SAT solvers with different inference techniques (unit clause, failed literal...)?
+	How do redundant constraints and different encodings affect each other (the "extended encoding" in effect puts in redundant constraints e.g.)
+	Can we make a learning Sudoku SAT solver that adds valid clauses (i.e. redundant constraints) that are frequently added during backtracking
+	to the input to increase performance on other sudokus?
+
+As a data set I would suggest the 50000 minimal sudokus found here: http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php
+This is also what's used in most of the other papers
+
+	
 	 
