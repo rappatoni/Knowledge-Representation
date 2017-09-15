@@ -101,6 +101,7 @@ I also think there might be very interesting follow up investigations which we s
 	to the input to increase performance on other sudokus?
 
 As a data set I would suggest the 50000 minimal sudokus found here: http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php
+Another dataset that might be useful is this website http://www.menneske.no/sudoku/
 This is also what's used in most of the other papers.
 
 Pseudocode for a valid clause learning algorithm:
