@@ -88,7 +88,6 @@ diplomatic dinner. So it would be good if our algorithm could learn this.
 
 http://4c.ucc.ie/~hsimonis/sudoku.pdf contains some redundant constraints. In addition I have thought of the following:
 
-	For each possible box of 9, at least 6 cells are different.
 	For the diagonals, at least 3 cells are different.
 	There can be at most 3 diagonal neighbours
 	No two neighbouring boxes (non-diagonally) can be the same
