@@ -302,7 +302,6 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
     //
     out_learnt.push();      // (leave room for the asserting literal)
     int index   = trail.size() - 1;
-    printf("%s\n", "test");
 
     do{
         assert(confl != CRef_Undef); // (otherwise should be UIP)
