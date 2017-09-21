@@ -17,11 +17,11 @@ Options:
     -p --problem file   Problem to be converted to sat.
 '''
 
-def v(i, j, d): 
+def v(i, j, d):
     return 81 * (i - 1) + 9 * (j - 1) + d
 
-#Reduces Sudoku problem to a SAT clauses 
-def sudoku_clauses(): 
+#Reduces Sudoku problem to a SAT clauses
+def sudoku_clauses():
     res = []
     # for all cells, ensure that the each cell:
     for i in range(1, 10):
@@ -33,7 +33,7 @@ def sudoku_clauses():
                 for dp in range(d + 1, 10):
                     res.append([-v(i, j, d), -v(i, j, dp)])
 
-    def valid(cells): 
+    def valid(cells):
         for i, xi in enumerate(cells):
             for j, xj in enumerate(cells):
                 if i < j:
@@ -44,12 +44,12 @@ def sudoku_clauses():
     for i in range(1, 10):
         valid([(i, j) for j in range(1, 10)])
         valid([(j, i) for j in range(1, 10)])
-        
+
     # ensure 3x3 sub-grids "regions" have distinct values
     for i in 1, 4, 7:
         for j in 1, 4 ,7:
             valid([(i + k % 3, j + k // 3) for k in range(9)])
-      
+
     assert len(res) == 81 * (1 + 36) + 27 * 324
     return res
 
@@ -77,13 +77,19 @@ class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
 
+def dimacs_out(filename, clauses):
+    with open(filename, "w") as fileobj:
+        for clause in clauses:
+            line = " ".join([str(literal) for literal in clause]) + " 0\n"
+            fileobj.write(line)
+
 def main(argv=None):
-    
+
     if argv is None:
         argv = sys.argv
     opts, args = getopt.getopt(argv[1:], "hp:", ["help", \
                          "problem"])
-        
+
     # option processing
     for option, value in opts:
         if option in ("-h", "--help"):
@@ -91,6 +97,7 @@ def main(argv=None):
         if option in ("-p", "--problem"):
             clauses = sudoku_clauses()
             geninput(value,clauses)
+            dimacs_out("dimacs.txt", clauses)
             sol = set(pycosat.solve(clauses))
 
             def read_cell(i, j):
@@ -98,9 +105,9 @@ def main(argv=None):
                 for d in range(1, 10):
                     if v(i, j, d) in sol:
                         return d
-            
+
             rows, columns = 9, 9;
-            sol_grid = [[0 for x in range(rows)] for y in range(columns)] 
+            sol_grid = [[0 for x in range(rows)] for y in range(columns)]
 
             for i in range(1, 10):
                 for j in range(1, 10):
