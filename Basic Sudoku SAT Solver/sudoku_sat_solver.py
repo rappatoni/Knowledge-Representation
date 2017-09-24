@@ -6,9 +6,9 @@ sudoku_sat_solver.py
 import sys
 import getopt
 import fileinput
-import pycosat
 from pprint import pprint
 from math import sqrt
+from subprocess import call
 
 
 help_message = '''[options]
@@ -19,6 +19,15 @@ Options:
 
 def v(i, j, d):
     return 81 * (i - 1) + 9 * (j - 1) + d
+
+def v_inv(variable):
+    variable -= 1
+    i = variable // 81 + 1
+    remainder = variable % 81
+    j = remainder // 9 + 1
+    remainder = variable % 9
+    d = remainder + 1
+    return i,j,d
 
 #Reduces Sudoku problem to a SAT clauses
 def sudoku_clauses():
@@ -83,7 +92,34 @@ def dimacs_out(filename, clauses):
             line = " ".join([str(literal) for literal in clause]) + " 0\n"
             fileobj.write(line)
 
+def read_results(ret, output_file, logfile):
+    # we don't really care about the output_file
+    sat = False
+    solution = []
+    with open(output_file, "r") as out_file:
+        out_file_list = list(out_file)
+        if (out_file_list[0] == "SAT\n"):
+            sat = True
+            for variable in [int(x) for x in out_file_list[1].strip().split()]:
+                if variable == 0:
+                    continue
+                solution.append(variable)
+    # we extract the learnt clauses
+    learnt = []
+    with open(logfile, "r") as out_file:
+        for line in out_file:
+            if line == "clause_found\n":
+                clause = next(out_file).strip()
+                learnt.append(clause)
+    return sat, solution, learnt
+
+
+
 def main(argv=None):
+    COMMAND = 'minisat %s %s > %s'
+    LOGFILE = "minisat.log"
+    DIMACS_OUT = "dimacs_clauses.txt"
+    MINISAT_OUT = "minisat_out.txt"
 
     if argv is None:
         argv = sys.argv
@@ -97,23 +133,17 @@ def main(argv=None):
         if option in ("-p", "--problem"):
             clauses = sudoku_clauses()
             geninput(value,clauses)
-            dimacs_out("dimacs.txt", clauses)
-            sol = set(pycosat.solve(clauses))
-
-            def read_cell(i, j):
-            # return the digit of cell i, j according to the solution
-                for d in range(1, 10):
-                    if v(i, j, d) in sol:
-                        return d
-
-            rows, columns = 9, 9;
-            sol_grid = [[0 for x in range(rows)] for y in range(columns)]
-
-            for i in range(1, 10):
-                for j in range(1, 10):
-                    sol_grid[i - 1][j - 1] = read_cell(i, j)
-
-            pprint(sol_grid)
+            dimacs_out(DIMACS_OUT, clauses)
+            ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+            satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+            if satisfied:
+                print("SAT")
+                for variable in solution:
+                    i, j, d = v_inv(abs(variable))
+                    #print("variable={}, i={}, j={}, d={}".format(abs(variable), i, j, d))
+            if learnt:
+                for learn in learnt:
+                    print(learn)
 
 
 if __name__ == "__main__":

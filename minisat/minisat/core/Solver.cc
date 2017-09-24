@@ -365,9 +365,11 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
 
     //Haukur edit to print what clauses are being learnt.
     if (verbosity >= 1){
+      printf("clause_found\n");
       for (i = 0; i < out_learnt.size(); i++){
-        printf("%s%i\n", value(out_learnt[i]) == l_True ? "" : "-", out_learnt[i].x);
+        printf("%s%i ", value(out_learnt[i]) == l_True ? "" : "-", out_learnt[i].x);
       }
+      printf("\n");
     }
     // Find correct backtrack level:
     //
