@@ -1,11 +1,8 @@
 # Knowledge-Representation
-
-# Setup instructions
+https://github.com/rappatoni/Knowledge-Representation
+## Setup instructions
+https://github.com/niklasso/minisat
 ./install_minisat.sh
-./install_satispy.sh
 
-To test if everything is working run:
-
-python2.7 test_clause_learning.py
-
-You should get no errors.
+## Running
+See readme in "Basic Sudoku SAT Solver"
