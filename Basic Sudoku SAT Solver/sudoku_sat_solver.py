@@ -137,7 +137,7 @@ def minimal_sudoku_clauses(): #minimal Sukoku Encoding
     assert len(res) == 81 + 27 * 324
     return res
 
-def redundant_sudoku_clauses() #Add the following redundant constraints:
+def redundant_sudoku_clauses(): #Add the following redundant constraints:
     pass
 
 def geninput(filename,clauses):
