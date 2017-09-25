@@ -138,6 +138,20 @@ def minimal_sudoku_clauses(): #minimal Sukoku Encoding
     return res
 
 def redundant_sudoku_clauses(): #Add the following redundant constraints:
+#Cardinality Matrix:
+
+#Block/Row-Interaction:
+
+#Block/Column-Interaction:
+
+#There is exactly one value that appears once in every cross of rows/columns:
+
+#Any two boxes that share the same columns or rows; any two columns and any two rows cannot be identical
+
+#There can be at most 3 diagonally neighbouring cells with identical values.
+
+#The (center) diagonals have at least three different values.
+
     pass
 
 def geninput(filename,clauses):
