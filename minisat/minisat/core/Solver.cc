@@ -367,7 +367,7 @@ void Solver::analyze(CRef confl, vec<Lit>& out_learnt, int& out_btlevel)
     if (verbosity >= 1){
       printf("clause_found\n");
       for (i = 0; i < out_learnt.size(); i++){
-        printf("%s%i ", sign(out_learnt[i]) ? "" : "-", var(out_learnt[i]));
+        printf("%s%i ", sign(out_learnt[i]) ? "-" : "", var(out_learnt[i]));
       }
       printf("\n");
     }

@@ -10,6 +10,10 @@ from pprint import pprint
 from math import sqrt
 from subprocess import call
 
+COMMAND = 'minisat %s %s > %s'
+LOGFILE = "minisat.log"
+DIMACS_OUT = "dimacs_clauses.txt"
+MINISAT_OUT = "minisat_out.txt"
 
 help_message = '''[options]
 Options:
@@ -62,25 +66,22 @@ def sudoku_clauses():
     assert len(res) == 81 * (1 + 36) + 27 * 324
     return res
 
-def geninput(filename,clauses):
+def read_sudoku(sudoku_as_line, clauses):
+    instance_clauses = clauses[:]
 
     i = 0
     j = 0
-    with open(filename) as fileobj:
-        while True:
-            c = fileobj.read(1)
-            if c == "\n":
-                break
-            d = int(c)
-            #print (d)
-            if d:
-                #print (d)
-                #print ("row:{0} column:{1} value:{2}".format(i,j,d))
-                clauses.append([v(i, j, d)])
-            j = j + 1
-            if j > 8:
-                i = i + 1
-                j = 0
+    for character in sudoku_as_line:
+        if character == "\n":
+            break
+        d = int(character)
+        if d:
+            instance_clauses.append([v(i, j, d)])
+        j = j + 1
+        if j > 8:
+            i = i + 1
+            j = 0
+    return instance_clauses
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -101,6 +102,7 @@ def read_results(ret, output_file, logfile):
         if (out_file_list[0] == "SAT\n"):
             sat = True
             for variable in [int(x) for x in out_file_list[1].strip().split()]:
+                # 0 is the end
                 if variable == 0:
                     continue
                 solution.append(variable)
@@ -113,14 +115,28 @@ def read_results(ret, output_file, logfile):
                 learnt.append(clause)
     return sat, solution, learnt
 
+def add_clauses(base, extra_clauses):
+    new_clauses = base[:]
+    for clause in extra_clauses:
+        new_clauses.append([clause])
+    return new_clauses
 
+def negate(clause):
+    return [-int(x) for x in clause.strip().split()]
+
+def check_validity(learnt, base_clauses):
+    for learn in learnt:
+        # for each learnt clause we are interested in if it is a globally valid clause.
+        negated_clause = negate(learn)
+        instance_clauses = add_clauses(base_clauses, negated_clause)
+        dimacs_out(DIMACS_OUT, instance_clauses)
+        ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+        satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+        # if we found a clause which is not satisfiable - Success!
+        if not satisfied:
+            print("Success! Globally valid clause={}".format(learn))
 
 def main(argv=None):
-    COMMAND = 'minisat %s %s > %s'
-    LOGFILE = "minisat.log"
-    DIMACS_OUT = "dimacs_clauses.txt"
-    MINISAT_OUT = "minisat_out.txt"
-
     if argv is None:
         argv = sys.argv
     opts, args = getopt.getopt(argv[1:], "hp:", ["help", \
@@ -131,19 +147,23 @@ def main(argv=None):
         if option in ("-h", "--help"):
             raise Usage(help_message)
         if option in ("-p", "--problem"):
-            clauses = sudoku_clauses()
-            geninput(value,clauses)
-            dimacs_out(DIMACS_OUT, clauses)
-            ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-            satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
-            if satisfied:
-                print("SAT")
-                for variable in solution:
-                    i, j, d = v_inv(abs(variable))
-                    #print("variable={}, i={}, j={}, d={}".format(abs(variable), i, j, d))
-            if learnt:
-                for learn in learnt:
-                    print(learn)
+            base_clauses = sudoku_clauses()
+            with open(value) as fileobj:
+                file_as_list = list(fileobj)
+                for index, sudoku in enumerate(file_as_list):
+                    print("{} of {}".format(index + 1, len(file_as_list)))
+                    instance_clauses = read_sudoku(sudoku, base_clauses)
+                    dimacs_out(DIMACS_OUT, instance_clauses)
+                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+                    if not satisfied:
+                        print("UNSAT!")
+                        #for variable in solution:
+                            #i, j, d = v_inv(abs(variable))
+                            #print("variable={}, i={}, j={}, d={}".format(abs(variable), i, j, d))
+                    if learnt:
+                        print("clauses learnt={}".format(len(learnt)))
+                        check_validity(learnt, base_clauses)
 
 
 if __name__ == "__main__":
