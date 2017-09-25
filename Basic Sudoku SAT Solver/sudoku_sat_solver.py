@@ -66,6 +66,91 @@ def sudoku_clauses():
     assert len(res) == 81 * (1 + 36) + 27 * 324
     return res
 
+def extended_sudoku_clauses(): #extended encoding
+    res = []
+    # for all cells, ensure that the each cell:
+    for i in range(1, 10):
+        for j in range(1, 10):
+            # denotes (at least) one of the 9 digits (1 clause)
+            res.append([v(i, j, d) for d in range(1, 10)])
+            # does not denote two different digits at once (36 clauses)
+            for d in range(1, 10):
+                for dp in range(d + 1, 10):
+                    res.append([-v(i, j, d), -v(i, j, dp)])
+
+    def valid(cells):
+        for i, xi in enumerate(cells):
+            for j, xj in enumerate(cells):
+                if i < j:
+                    for d in range(1, 10):
+                        res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
+
+    # ensure rows and columns have distinct values (alldifferent constraints)
+    #(2*9*9*9C2 clauses)
+    # + redundant constraint: ensure each value appears at least once per columns/row
+    # (2*9*9 clauses)
+    for i in range(1, 10):
+        valid([(i, j) for j in range(1, 10)])
+        for d in range (1,10):
+            res.append([v(i, j, d) for j in range(1, 10)])
+        valid([(j, i) for j in range(1, 10)])
+        for d in range(1,10):
+            res.append([v(j, i, d) for j in range(1, 10)])
+
+
+    # ensure 3x3 sub-grids "regions" have distinct values (alldifferent)
+    # (9*9*9C2 clauses)
+    # +redundant constraint: each value appears at least once per 3x3 box
+    #(9*9 clauses)
+    for i in 1, 4, 7:
+        for j in 1, 4 ,7:
+            valid([(i + k % 3, j + k // 3) for k in range(9)])
+            for d in range (1,10):
+                res.append([v(i+k%3, j+k//3, d) for k in range(9)])
+
+    assert len(res) == 81*(1+36)+ 27 * 324+ 3 * 81
+    return res
+
+def minimal_sudoku_clauses(): #minimal Sukoku Encoding
+    res = []
+    # for all cells, ensure that the each cell:
+    for i in range(1, 10):
+        for j in range(1, 10):
+            # denotes (at least) one of the 9 digits (1 clause)
+            res.append([v(i, j, d) for d in range(1, 10)])
+
+    def valid(cells):
+        for i, xi in enumerate(cells):
+            for j, xj in enumerate(cells):
+                if i < j:
+                    for d in range(1, 10):
+                        res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
+
+    # ensure rows and columns have distinct values (alldifferent constraints)
+    #(2*9*9*9C2 clauses)
+    for i in range(1, 10):
+        valid([(i, j) for j in range(1, 10)])
+        valid([(j, i) for j in range(1, 10)])
+
+    # ensure 3x3 sub-grids "regions" have distinct values (alldifferent)
+    #(9*9*9C2 clauses)
+    for i in 1, 4, 7:
+        for j in 1, 4 ,7:
+            valid([(i + k % 3, j + k // 3) for k in range(9)])
+
+    assert len(res) == 81 + 27 * 324
+    return res
+
+def redundant_sudoku_clauses(): #Add the following redundant constraints:
+    #Cardinality Matrix:
+    #Block/Row-Interaction:
+    #Block/Column-Interaction:
+    #There is exactly one value that appears once in every cross of rows/columns:
+    #Any two boxes that share the same columns or rows; any two columns and any two rows cannot be identical
+    #There can be at most 3 diagonally neighbouring cells with identical values.
+    #The (center) diagonals have at least three different values.
+    pass
+
 def read_sudoku(sudoku_as_line, clauses):
     instance_clauses = clauses[:]
 
