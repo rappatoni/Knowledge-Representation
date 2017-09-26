@@ -6,6 +6,7 @@ sudoku_sat_solver.py
 import sys
 import getopt
 import fileinput
+import pycosat
 from pprint import pprint
 from math import sqrt
 from subprocess import call
@@ -154,18 +155,18 @@ def redundant_sudoku_clauses(): #Add the following redundant constraints:
 def read_sudoku(sudoku_as_line, clauses):
     instance_clauses = clauses[:]
 
-    i = 0
-    j = 0
+    i = 1
+    j = 1
     for character in sudoku_as_line:
         if character == "\n":
             break
         d = int(character)
+        if j > 9:
+            i = i + 1
+            j = 1
         if d:
             instance_clauses.append([v(i, j, d)])
-        j = j + 1
-        if j > 8:
-            i = i + 1
-            j = 0
+        j = j + 1 
     return instance_clauses
 
 class Usage(Exception):
@@ -216,9 +217,12 @@ def check_validity(learnt, base_clauses):
         instance_clauses = add_clauses(base_clauses, negated_clause)
         dimacs_out(DIMACS_OUT, instance_clauses)
         ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-        satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+        satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
         # if we found a clause which is not satisfiable - Success!
         if not satisfied:
+            for variable in learn.split():
+                i, j, d = v_inv(abs(int(variable)))
+                print("i={}, j={}, d={} ".format(i, j, d))
             print("Success! Globally valid clause={}".format(learn))
 
 def main(argv=None):
@@ -233,11 +237,16 @@ def main(argv=None):
             raise Usage(help_message)
         if option in ("-p", "--problem"):
             base_clauses = sudoku_clauses()
+            #base_clauses = extended_sudoku_clauses()
+            #base_clauses = minimal_sudoku_clauses()
             with open(value) as fileobj:
                 file_as_list = list(fileobj)
+                #iterate over the set of sudoku problems
                 for index, sudoku in enumerate(file_as_list):
                     print("{} of {}".format(index + 1, len(file_as_list)))
                     instance_clauses = read_sudoku(sudoku, base_clauses)
+
+                    #solve using MiniSAT
                     dimacs_out(DIMACS_OUT, instance_clauses)
                     ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
                     satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
@@ -249,7 +258,6 @@ def main(argv=None):
                     if learnt:
                         print("clauses learnt={}".format(len(learnt)))
                         check_validity(learnt, base_clauses)
-
 
 if __name__ == "__main__":
     sys.exit(main())
