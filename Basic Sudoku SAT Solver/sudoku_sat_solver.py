@@ -162,13 +162,12 @@ def read_sudoku(sudoku_as_line, clauses):
         if character == "\n":
             break
         d = int(character)
-        if j > 9:
-            i = i + 1
-            j = 1
         if d:
             instance_clauses.append([v(i, j, d)])
         j = j + 1
-
+        if j > 9:
+            i = i + 1
+            j = 1
     return instance_clauses
 
 class Usage(Exception):
