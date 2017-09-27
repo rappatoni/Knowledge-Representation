@@ -6,7 +6,6 @@ sudoku_sat_solver.py
 import sys
 import getopt
 import fileinput
-import pycosat
 from pprint import pprint
 from math import sqrt
 from subprocess import call
@@ -166,7 +165,8 @@ def read_sudoku(sudoku_as_line, clauses):
             j = 1
         if d:
             instance_clauses.append([v(i, j, d)])
-        j = j + 1 
+        j = j + 1
+
     return instance_clauses
 
 class Usage(Exception):
@@ -198,6 +198,7 @@ def read_results(ret, output_file, logfile):
         for line in out_file:
             if line == "clause_found\n":
                 clause = next(out_file).strip()
+                clause = clause.replace(" 0", "")
                 learnt.append(clause)
     return sat, solution, learnt
 
@@ -220,10 +221,10 @@ def check_validity(learnt, base_clauses):
         satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
         # if we found a clause which is not satisfiable - Success!
         if not satisfied:
+            print("Success! Globally valid clause={}".format(learn))
             for variable in learn.split():
                 i, j, d = v_inv(abs(int(variable)))
                 print("i={}, j={}, d={} ".format(i, j, d))
-            print("Success! Globally valid clause={}".format(learn))
 
 def main(argv=None):
     if argv is None:
@@ -236,9 +237,9 @@ def main(argv=None):
         if option in ("-h", "--help"):
             raise Usage(help_message)
         if option in ("-p", "--problem"):
-            base_clauses = sudoku_clauses()
+            #base_clauses = sudoku_clauses()
             #base_clauses = extended_sudoku_clauses()
-            #base_clauses = minimal_sudoku_clauses()
+            base_clauses = minimal_sudoku_clauses()
             with open(value) as fileobj:
                 file_as_list = list(fileobj)
                 #iterate over the set of sudoku problems
