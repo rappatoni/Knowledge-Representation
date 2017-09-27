@@ -91,7 +91,7 @@ def extended_sudoku_clauses(): #extended encoding
     # (2*9*9 clauses)
     for i in range(1, 10):
         valid([(i, j) for j in range(1, 10)])
-        for d in range (1,10):
+        for d in range(1,10):
             res.append([v(i, j, d) for j in range(1, 10)])
         valid([(j, i) for j in range(1, 10)])
         for d in range(1,10):
@@ -220,6 +220,38 @@ def check_validity(learnt, base_clauses):
         # if we found a clause which is not satisfiable - Success!
         if not satisfied:
             print("Success! Globally valid clause={}".format(learn))
+
+
+def logically_prune(learned_clauses):
+    """
+
+    :param learned_clauses: a set of sets of learned clauses from n runs on n different Sudokus
+    :return: the logically pruned set of learned clauses
+    """
+    #Delete duplicate clauses.
+
+    #Delete contradictory clauses: if a clause say (a or b) and its negation are both learned we know
+    #neither is valid. To do this we use that ~(a or b) <=> (~a & ~b). For every set of learned clauses
+    #we collect the unit clauses into a set representing a big conjunction (e.g. (~a & ~b)
+    # becomes {~a,~b}). Then we compare all non-unit-clauses of length smaller or equal to
+    # the cardinality of any of the unit clause sets to the respective unit clause sets. If all
+    #literals of a non-unit-clause appear in negation in a unit clause set, delete the non-unit-clause.
+
+    #Thereafter delete the unit clauses: unit clauses cannot be valid in general Sudokus.
+    pass
+
+def heuristically_prune(learned_clauses):
+    """
+
+    :param learned_clauses: a set of sets of learned clauses from n runs on n different Sudokus
+    :return: the heuristically pruned set of learned clauses
+    """
+
+    #If logical pruning is insufficient we could prune heuristically. If we hardly ever learn a
+    #clause, it in all likelihood would not help the SAT-solver much (this is itself a hypothesis
+    #we could possibly test). Thus we could throw out all clauses that appear at a rate of less
+    # than x/n, where n is the number of sudokus.
+    pass
 
 def main(argv=None):
     if argv is None:
