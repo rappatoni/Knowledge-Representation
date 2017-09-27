@@ -1,6 +1,6 @@
 # README #
 
-This folder contains programs corresponding to the Sudoku SAT Solver using pycosat library.
+This folder contains files corresponding to the Sudoku SAT Solver. The SAT Solver used is MiniSAT.
 
 Run the program:
 
