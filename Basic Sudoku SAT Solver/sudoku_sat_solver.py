@@ -6,7 +6,6 @@ sudoku_sat_solver.py
 import sys
 import getopt
 import fileinput
-import pycosat
 from pprint import pprint
 from math import sqrt
 from subprocess import call
@@ -155,18 +154,18 @@ def redundant_sudoku_clauses(): #Add the following redundant constraints:
 def read_sudoku(sudoku_as_line, clauses):
     instance_clauses = clauses[:]
 
-    i = 1
-    j = 1
+    i = 0
+    j = 0
     for character in sudoku_as_line:
         if character == "\n":
             break
         d = int(character)
-        if j > 9:
-            i = i + 1
-            j = 1
         if d:
             instance_clauses.append([v(i, j, d)])
-        j = j + 1 
+        j = j + 1
+        if j > 8:
+            i = i + 1
+            j = 0
     return instance_clauses
 
 class Usage(Exception):
@@ -217,7 +216,7 @@ def check_validity(learnt, base_clauses):
         instance_clauses = add_clauses(base_clauses, negated_clause)
         dimacs_out(DIMACS_OUT, instance_clauses)
         ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-        satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
+        satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
         # if we found a clause which is not satisfiable - Success!
         if not satisfied:
             for variable in learn.split():
