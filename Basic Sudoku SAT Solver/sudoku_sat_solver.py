@@ -4,6 +4,7 @@ sudoku_sat_solver.py
 """
 
 import sys
+import time
 import getopt
 import fileinput
 from pprint import pprint
@@ -14,6 +15,7 @@ COMMAND = 'minisat %s %s > %s'
 LOGFILE = "minisat.log"
 DIMACS_OUT = "dimacs_clauses.txt"
 MINISAT_OUT = "minisat_out.txt"
+VALID_OUT = "valid_clauses.txt"
 
 help_message = '''[options]
 Options:
@@ -193,13 +195,14 @@ def read_results(ret, output_file, logfile):
                     continue
                 solution.append(variable)
     # we extract the learnt clauses
-    learnt = []
+    learnt = set()
     with open(logfile, "r") as out_file:
         for line in out_file:
             if line == "clause_found\n":
                 clause = next(out_file).strip()
                 clause = clause.replace(" 0", "")
-                learnt.append(clause)
+                clause = clause.replace(" -0", "")
+                learnt.add(clause)
     return sat, solution, learnt
 
 def add_clauses(base, extra_clauses):
@@ -212,6 +215,8 @@ def negate(clause):
     return [-int(x) for x in clause.strip().split()]
 
 def check_validity(learnt, base_clauses):
+    valid_clauses = set()
+    logically_prune(learnt)
     for learn in learnt:
         # for each learnt clause we are interested in if it is a globally valid clause.
         negated_clause = negate(learn)
@@ -221,11 +226,13 @@ def check_validity(learnt, base_clauses):
         satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
         # if we found a clause which is not satisfiable - Success!
         if not satisfied:
-            print("Success! Globally valid clause={}".format(learn))
-            for variable in learn.split():
-                i, j, d = v_inv(abs(int(variable)))
-                print("i={}, j={}, d={} ".format(i, j, d))
+            valid_clauses.add(learn)
+    return valid_clauses
 
+def should_process_validities(index):
+    if index % 10 == 0:
+        return True
+    return False
 
 def logically_prune(learned_clauses):
     """
@@ -233,6 +240,9 @@ def logically_prune(learned_clauses):
     :param learned_clauses: a set of sets of learned clauses from n runs on n different Sudokus
     :return: the logically pruned set of learned clauses
     """
+    print(len(learned_clauses))
+    learned_clauses = [clause for clause in learned_clauses if " " in clause]
+    print(len(learned_clauses))
     #Delete duplicate clauses.
 
     #Delete contradictory clauses: if a clause say (a or b) and its negation are both learned we know
@@ -269,6 +279,10 @@ def main(argv=None):
         if option in ("-h", "--help"):
             raise Usage(help_message)
         if option in ("-p", "--problem"):
+            global_learnt_clauses = set()
+            valid_clauses = set()
+            start_time = time.time()
+
             #base_clauses = sudoku_clauses()
             #base_clauses = extended_sudoku_clauses()
             base_clauses = minimal_sudoku_clauses()
@@ -284,13 +298,29 @@ def main(argv=None):
                     ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
                     satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
                     if not satisfied:
-                        print("UNSAT!")
+                        raise Exception("All sudokus should be satisfiable")
                         #for variable in solution:
                             #i, j, d = v_inv(abs(variable))
                             #print("variable={}, i={}, j={}, d={}".format(abs(variable), i, j, d))
                     if learnt:
-                        print("clauses learnt={}".format(len(learnt)))
-                        check_validity(learnt, base_clauses)
+                        for clause in learnt:
+                            global_learnt_clauses.add(clause)
+                    if should_process_validities(index + 1):
+                        valid_clauses = check_validity(global_learnt_clauses, base_clauses)
+                        for clause in valid_clauses:
+                            valid_clauses.add(clause)
+                        end_time = time.time()
+                        print("time={}".format(end_time - start_time))
+                        start_time = end_time
+            with open(VALID_OUT, "+w") as fileobj:
+                for clause in valid_clauses:
+                    fileobj.write("clause")
+                    for variable in clause.split():
+                        i, j, d = v_inv(abs(int(variable)))
+                        present = "True"
+                        if int(variable) < 0:
+                            present = "False"
+                        fileobj.write("i={}, j={}, d={} {}".format(i, j, d, present))
 
 if __name__ == "__main__":
     sys.exit(main())
