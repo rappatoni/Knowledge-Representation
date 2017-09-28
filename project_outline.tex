@@ -1,3 +1,17 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{ amssymb }
+\usepackage{color}
+\begin{document}
+
+\title{A Theory Learning SAT-Solver for Sudokus\\
+	\large Project Report}
+\maketitle
+
+
+
+
 Overview:
 The project is about the effects of redundant constraints and the process of learning redundant constraints in Sudoku.
 
@@ -37,39 +51,41 @@ This is also what's used in most of the other papers.
 
 Code:
 
-def generate_minimal_constraints(i,j,d):
-  constraints = []
-  constraints += valid_cells(i,j,d)
-  constraints += unique_rows(i,j,d)
-  constraints += unique_columns(i,j,d)
-  constraints += unique_blocks(i,j,d)
+%def generate_minimal_constraints(i,j,d):
+  %constraints = []
+  %constraints += valid_cells(i,j,d)
+  %constraints += unique_rows(i,j,d)
+  %constraints += unique_columns(i,j,d)
+  %constraints += unique_blocks(i,j,d)
 
-def generate_minimal_constraints(i,j,d):
-  constraints = []
-  constraints += valid_cells(i,j,d)
-  constraints += unique_cells(i,j,d)
-  constraints += valid_rows(i,j,d)
-  constraints += unique_rows(i,j,d)
-  constraints += valid_columns(i,j,d)
-  constraints += unique_columns(i,j,d)
-  constraints += valid_blocks(i,j,d)
-  constraints += unique_blocks(i,j,d)
+%def generate_minimal_constraints(i,j,d):
+  %constraints = []
+  %constraints += valid_cells(i,j,d)
+  %constraints += unique_cells(i,j,d)
+  %constraints += valid_rows(i,j,d)
+  %constraints += unique_rows(i,j,d)
+  %constraints += valid_columns(i,j,d)
+  %constraints += unique_columns(i,j,d)
+  %constraints += valid_blocks(i,j,d)
+  %constraints += unique_blocks(i,j,d)
 
-def is_globally_valid(constraints, clause):
-  clause = negate_clause(clause)
-  results = solve_sudoku(constaints + clause)
-  if is_satisfied(results):
-    return True
-  return False
+%def is_globally_valid(constraints, clause):
+  %clause = negate_clause(clause)
+  %results = solve_sudoku(constaints + clause)
+  %if is_satisfied(results):
+    %return True
+  %return False
 
 
-constraints = generate_minimal_constraints()
-givens = read_givens() #from std.in
-results = solve_sudoku(constaints + givens)
-learned_clauses = read_from_results(results)
-globally_valid_clauses = []
-for learned_clause in learned_clauses:
-  if is_globally_valid(constraints, learned_clause):
-    globally_valid_clauses.append(learned_clause)
+%constraints = generate_minimal_constraints()
+%givens = read_givens() #from std.in
+%results = solve_sudoku(constaints + givens)
+%learned_clauses = read_from_results(results)
+%globally_valid_clauses = []
+%for learned_clause in learned_clauses:
+  %if is_globally_valid(constraints, learned_clause):
+    %globally_valid_clauses.append(learned_clause)
 
-print(globally_valid_clauses)
+%print(globally_valid_clauses)
+
+\end{document}

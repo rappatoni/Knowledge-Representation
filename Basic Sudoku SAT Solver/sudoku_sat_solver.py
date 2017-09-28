@@ -264,7 +264,7 @@ def logically_prune(learned_clauses):
 
     #Alternative (better) approach: record the sudoku solutions. Then for each clause  say (a or ~b)
     #check the solved sudokus. If there is a solved sudoku s.t. a is not in the solution and b is, then
-    # (a or ~b) is false in that sudoku and hence cannot be valid. 
+    # (a or ~b) is false in that sudoku and hence cannot be valid.
 
     #Check for supersets of encoding clauses (minimal and extended).
 
