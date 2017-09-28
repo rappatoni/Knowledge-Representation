@@ -21,7 +21,12 @@ help_message = '''[options]
 Options:
     -h --help           This help
     -p --problem file   Problem to be converted to sat.
+    -t --train file     Train and Train a sat.
 '''
+
+def split_list(a_list):
+    half = len(a_list)//2
+    return a_list[:half], a_list[half:]
 
 def v(i, j, d):
     return 81 * (i - 1) + 9 * (j - 1) + d
@@ -270,13 +275,100 @@ def heuristically_prune(learned_clauses):
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    opts, args = getopt.getopt(argv[1:], "hp:", ["help", \
-                         "problem"])
+    opts, args = getopt.getopt(argv[1:], "hp:t:", ["help", \
+                         "problem", "train"])
 
     # option processing
     for option, value in opts:
         if option in ("-h", "--help"):
             raise Usage(help_message)
+        if option in ("-t", "--train"):
+            global_learnt_clauses = set()
+            valid_clauses = set()
+
+            #base_clauses = sudoku_clauses()
+            #base_clauses = extended_sudoku_clauses()
+            base_clauses = minimal_sudoku_clauses()
+
+            with open(value) as fileobj:
+                file_as_list = list(fileobj)
+                train_list, test_list = split_list(file_as_list)
+                before_test_list, after_test_list =  split_list(test_list)
+
+                #Before Training:
+                #################
+                #iterate over the first quarter of sudoku problems to test the performance before  
+                #training with reduntant clauses
+                print("Before Training:")
+                start_time = time.time()
+                for index, sudoku in enumerate(before_test_list):
+                    print("{} of {}".format(index + 1, len(before_test_list)))
+                    instance_clauses = read_sudoku(sudoku, base_clauses)
+
+                    #solve using MiniSAT
+                    dimacs_out(DIMACS_OUT, instance_clauses)
+                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+                    if not satisfied:
+                        raise Exception("All sudokus should be satisfiable")
+                end_time = time.time()
+                print("time={}".format(end_time - start_time))
+
+
+                #Training:
+                #################
+                #iterate over the half of sudoku problems to train the SAT solver with 
+                #reduntant clauses
+                print("Training:")
+                start_time = time.time()
+                for index, sudoku in enumerate(train_list):
+                    print("{} of {}".format(index + 1, len(train_list)))
+                    instance_clauses = read_sudoku(sudoku, base_clauses)
+
+                    #solve using MiniSAT
+                    dimacs_out(DIMACS_OUT, instance_clauses)
+                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+                    if not satisfied:
+                        raise Exception("All sudokus should be satisfiable")
+                    if learnt:
+                        for clause in learnt:
+                            global_learnt_clauses.add(clause)
+                    if should_process_validities(index + 1):
+                        valid_clauses = check_validity(global_learnt_clauses, base_clauses)
+                        for clause in valid_clauses:
+                            valid_clauses.add(clause)
+                end_time = time.time()
+                print("time={}".format(end_time - start_time))
+                with open(VALID_OUT, "+w") as fileobj:
+                    for clause in valid_clauses:
+                        fileobj.write("\nclause ")
+                        for variable in clause.split():
+                            i, j, d = v_inv(abs(int(variable)))
+                            present = "True"
+                            if int(variable) < 0:
+                                present = "False"
+                            fileobj.write("i={}, j={}, d={} {}".format(i, j, d, present))
+
+                #After Training:
+                #################
+                #iterate over the last quarter of sudoku problems to test the performance 
+                #before training with reduntant clauses
+                print("After Training:")
+                start_time = time.time()
+                for index, sudoku in enumerate(after_test_list):
+                    print("{} of {}".format(index + 1, len(after_test_list)))
+                    instance_clauses = read_sudoku(sudoku, base_clauses)
+
+                    #solve using MiniSAT
+                    dimacs_out(DIMACS_OUT, instance_clauses)
+                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+                    if not satisfied:
+                        raise Exception("All sudokus should be satisfiable")
+                end_time = time.time()
+                print("time={}".format(end_time - start_time))
+
         if option in ("-p", "--problem"):
             global_learnt_clauses = set()
             valid_clauses = set()
@@ -313,7 +405,7 @@ def main(argv=None):
                         start_time = end_time
             with open(VALID_OUT, "+w") as fileobj:
                 for clause in valid_clauses:
-                    fileobj.write("clause")
+                    fileobj.write("\nclause")
                     for variable in clause.split():
                         i, j, d = v_inv(abs(int(variable)))
                         present = "True"
