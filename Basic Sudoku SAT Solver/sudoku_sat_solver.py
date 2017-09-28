@@ -257,6 +257,11 @@ def logically_prune(learned_clauses):
     #literals of a non-unit-clause appear in negation in a unit clause set, delete the non-unit-clause.
 
     #Thereafter delete the unit clauses: unit clauses cannot be valid in general Sudokus.
+
+    #Check for supersets of encoding clauses (minimal and extended).
+
+    #Delete clauses that were already val-checked on the last iteration
+
     pass
 
 def heuristically_prune(learned_clauses):
@@ -270,6 +275,18 @@ def heuristically_prune(learned_clauses):
     #clause, it in all likelihood would not help the SAT-solver much (this is itself a hypothesis
     #we could possibly test). Thus we could throw out all clauses that appear at a rate of less
     # than x/n, where n is the number of sudokus.
+    pass
+
+def classify_validities(validities):
+    """
+
+    :param validities: the set of validities
+    :return: A set of classes of validities
+    """
+
+    #Classes: -supersets of encoding clauses (ucell, vcell, urow, vrow, ucol, urow, ublock, vblock)
+    #         -possibly the same for optimized and efficient encoding
+    #         -something new (surprise!)
     pass
 
 def main(argv=None):
@@ -335,6 +352,7 @@ def main(argv=None):
                         for clause in learnt:
                             global_learnt_clauses.add(clause)
                     if should_process_validities(index + 1):
+                        #Here we should think about the control flow,
                         valid_clauses = check_validity(global_learnt_clauses, base_clauses)
                         for clause in valid_clauses:
                             valid_clauses.add(clause)
