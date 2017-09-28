@@ -41,109 +41,114 @@ def v_inv(variable):
     return i,j,d
 
 #Reduces Sudoku problem to a SAT clauses
-def sudoku_clauses():
+def valid(cells):
     res = []
-    # for all cells, ensure that the each cell:
+    for i, xi in enumerate(cells):
+        for j, xj in enumerate(cells):
+            if i < j:
+                for d in range(1, 10):
+                    res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
+    return res
+
+def valid_cells():
+    res = []
     for i in range(1, 10):
         for j in range(1, 10):
             # denotes (at least) one of the 9 digits (1 clause)
             res.append([v(i, j, d) for d in range(1, 10)])
+    return res
+
+def unique_cells():
+    res = []
+    for i in range(1, 10):
+        for j in range(1, 10):
             # does not denote two different digits at once (36 clauses)
             for d in range(1, 10):
                 for dp in range(d + 1, 10):
                     res.append([-v(i, j, d), -v(i, j, dp)])
+    return res
 
-    def valid(cells):
-        for i, xi in enumerate(cells):
-            for j, xj in enumerate(cells):
-                if i < j:
-                    for d in range(1, 10):
-                        res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
-
-    # ensure rows and columns have distinct values
+def valid_rows():
+    res = []
     for i in range(1, 10):
-        valid([(i, j) for j in range(1, 10)])
-        valid([(j, i) for j in range(1, 10)])
+        for d in range(1,10):
+            res.append([v(i, j, d) for j in range(1, 10)])
+    return res
 
-    # ensure 3x3 sub-grids "regions" have distinct values
+def valid_columns():
+    res = []
+    for i in range(1, 10):
+        for d in range(1,10):
+            res.append([v(j, i, d) for j in range(1, 10)])
+    return res
+
+def valid_blocks():
+    res = []
     for i in 1, 4, 7:
         for j in 1, 4 ,7:
-            valid([(i + k % 3, j + k // 3) for k in range(9)])
+            for d in range (1,10):
+                res.append([v(i+k%3, j+k//3, d) for k in range(9)])
+    return res
+
+def unique_rows():
+    res = []
+    for i in range(1, 10):
+        res += valid([(i, j) for j in range(1, 10)])
+    return res
+
+def unique_columns():
+    res = []
+    for i in range(1, 10):
+        res += valid([(j, i) for j in range(1, 10)])
+    return res
+
+def unique_blocks():
+    # ensure 3x3 sub-grids "regions" have distinct values
+    res = []
+    for i in 1, 4, 7:
+        for j in 1, 4 ,7:
+            res += valid([(i + k % 3, j + k // 3) for k in range(9)])
+    return res
+
+def sudoku_clauses():
+    res = []
+    res += valid_cells()
+    res += unique_cells()
+    res += unique_rows()
+    res += unique_columns()
+    res += unique_blocks()
 
     assert len(res) == 81 * (1 + 36) + 27 * 324
     return res
 
 def extended_sudoku_clauses(): #extended encoding
     res = []
-    # for all cells, ensure that the each cell:
-    for i in range(1, 10):
-        for j in range(1, 10):
-            # denotes (at least) one of the 9 digits (1 clause)
-            res.append([v(i, j, d) for d in range(1, 10)])
-            # does not denote two different digits at once (36 clauses)
-            for d in range(1, 10):
-                for dp in range(d + 1, 10):
-                    res.append([-v(i, j, d), -v(i, j, dp)])
-
-    def valid(cells):
-        for i, xi in enumerate(cells):
-            for j, xj in enumerate(cells):
-                if i < j:
-                    for d in range(1, 10):
-                        res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
-
+    res += valid_cells()
+    res += unique_cells()
     # ensure rows and columns have distinct values (alldifferent constraints)
     #(2*9*9*9C2 clauses)
     # + redundant constraint: ensure each value appears at least once per columns/row
     # (2*9*9 clauses)
-    for i in range(1, 10):
-        valid([(i, j) for j in range(1, 10)])
-        for d in range(1,10):
-            res.append([v(i, j, d) for j in range(1, 10)])
-        valid([(j, i) for j in range(1, 10)])
-        for d in range(1,10):
-            res.append([v(j, i, d) for j in range(1, 10)])
-
-
+    res += valid_rows()
+    res += unique_rows()
+    res += valid_columns()
+    res += unique_columns()
     # ensure 3x3 sub-grids "regions" have distinct values (alldifferent)
     # (9*9*9C2 clauses)
     # +redundant constraint: each value appears at least once per 3x3 box
     #(9*9 clauses)
-    for i in 1, 4, 7:
-        for j in 1, 4 ,7:
-            valid([(i + k % 3, j + k // 3) for k in range(9)])
-            for d in range (1,10):
-                res.append([v(i+k%3, j+k//3, d) for k in range(9)])
+    res += valid_blocks()
+    res += unique_blocks()
 
     assert len(res) == 81*(1+36)+ 27 * 324+ 3 * 81
     return res
 
 def minimal_sudoku_clauses(): #minimal Sukoku Encoding
     res = []
-    # for all cells, ensure that the each cell:
-    for i in range(1, 10):
-        for j in range(1, 10):
-            # denotes (at least) one of the 9 digits (1 clause)
-            res.append([v(i, j, d) for d in range(1, 10)])
-
-    def valid(cells):
-        for i, xi in enumerate(cells):
-            for j, xj in enumerate(cells):
-                if i < j:
-                    for d in range(1, 10):
-                        res.append([-v(xi[0], xi[1], d), -v(xj[0], xj[1], d)])
-
-    # ensure rows and columns have distinct values (alldifferent constraints)
-    #(2*9*9*9C2 clauses)
-    for i in range(1, 10):
-        valid([(i, j) for j in range(1, 10)])
-        valid([(j, i) for j in range(1, 10)])
-
-    # ensure 3x3 sub-grids "regions" have distinct values (alldifferent)
-    #(9*9*9C2 clauses)
-    for i in 1, 4, 7:
-        for j in 1, 4 ,7:
-            valid([(i + k % 3, j + k // 3) for k in range(9)])
+    res += valid_cells()
+    res += unique_rows()
+    res += unique_columns()
+    res += unique_blocks()
 
     assert len(res) == 81 + 27 * 324
     return res
@@ -200,12 +205,13 @@ def read_results(ret, output_file, logfile):
                 solution.append(variable)
     # we extract the learnt clauses
     learnt = set()
+    import re
     with open(logfile, "r") as out_file:
         for line in out_file:
             if line == "clause_found\n":
                 clause = next(out_file).strip()
-                clause = clause.replace(" 0", "")
-                clause = clause.replace(" -0", "")
+                clause = re.sub(r" -?0", "", clause)
+                clause = re.sub(r"^-?0 ", "", clause)
                 learnt.add(clause)
     return sat, solution, learnt
 
@@ -220,11 +226,13 @@ def negate(clause):
 
 def check_validity(learnt, base_clauses):
     valid_clauses = set()
-    logically_prune(learnt)
-    for learn in learnt:
+    valid_clauses_pruned, need_processing = logically_prune(learnt)
+    valid_clauses.update(valid_clauses_pruned)
+    for learn in need_processing:
         # for each learnt clause we are interested in if it is a globally valid clause.
-        negated_clause = negate(learn)
-        instance_clauses = add_clauses(base_clauses, negated_clause)
+        # when we negate a clause, we get many conjuncted clauses
+        negated_clauses = negate(learn)
+        instance_clauses = add_clauses(base_clauses, negated_clauses)
         dimacs_out(DIMACS_OUT, instance_clauses)
         ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
         satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
@@ -233,17 +241,13 @@ def check_validity(learnt, base_clauses):
             valid_clauses.add(learn)
     return valid_clauses
 
-def should_process_validities(index):
-    if index % 10 == 0:
-        return True
-    return False
-
 def logically_prune(learned_clauses):
     """
 
     :param learned_clauses: a set of sets of learned clauses from n runs on n different Sudokus
     :return: the logically pruned set of learned clauses
     """
+    valid_clauses = set()
     print(len(learned_clauses))
     learned_clauses = [clause for clause in learned_clauses if " " in clause]
     print(len(learned_clauses))
@@ -262,7 +266,7 @@ def logically_prune(learned_clauses):
 
     #Delete clauses that were already val-checked on the last iteration
 
-    pass
+    return valid_clauses, learned_clauses
 
 def heuristically_prune(learned_clauses):
     """
@@ -289,147 +293,94 @@ def classify_validities(validities):
     #         -something new (surprise!)
     pass
 
+def process_sudokus(list_of_sudokus, encoding):
+    print("Before Training:")
+    start_time = time.time()
+    learnt_clauses = set()
+    for index, sudoku in enumerate(list_of_sudokus):
+        print("{} of {}".format(index + 1, len(list_of_sudokus)))
+        instance_clauses = read_sudoku(sudoku, encoding)
+
+        #solve using MiniSAT
+        dimacs_out(DIMACS_OUT, instance_clauses)
+        ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+        satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
+        if not satisfied:
+            raise Exception("All sudokus should be satisfiable")
+        if learnt:
+            for clause in learnt:
+                learnt_clauses.add(clause)
+    end_time = time.time()
+    print("time={}".format(end_time - start_time))
+    return learnt_clauses
+
+def write_out_valid_clauses(valid_clauses):
+    with open(VALID_OUT, "w+") as fileobj:
+        for clause in valid_clauses:
+            fileobj.write("clause\n")
+            fileobj.write(clause + "\n")
+            for variable in clause.split():
+                i, j, d = v_inv(abs(int(variable)))
+                present = "True"
+                if int(variable) < 0:
+                    present = "False"
+                fileobj.write("i={}, j={}, d={} {}\n".format(i, j, d, present))
+
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    opts, args = getopt.getopt(argv[1:], "hp:t:", ["help", \
-                         "problem", "train"])
+    opts, args = getopt.getopt(argv[1:], "hp:t:l:", ["help", \
+                         "problem", "train", "limit"])
 
     # option processing
     for option, value in opts:
         if option in ("-h", "--help"):
             raise Usage(help_message)
-        if option in ("-t", "--train"):
-            global_learnt_clauses = set()
-            valid_clauses = set()
-
-            #base_clauses = sudoku_clauses()
-            #base_clauses = extended_sudoku_clauses()
-            base_clauses = minimal_sudoku_clauses()
-
+        limit = 0
+        if option in ("-l", "--limit"):
+            limit = int(value)
+        if option in ("-t", "--train", "-p", "--problem"):
             with open(value) as fileobj:
                 file_as_list = list(fileobj)
-                train_list, test_list = split_list(file_as_list)
-                before_test_list, after_test_list =  split_list(test_list)
+    if limit:
+        file_as_list = file_as_list[:limit]
 
-                #Before Training:
-                #################
-                #iterate over the first quarter of sudoku problems to test the performance before  
-                #training with reduntant clauses
-                print("Before Training:")
-                start_time = time.time()
-                for index, sudoku in enumerate(before_test_list):
-                    print("{} of {}".format(index + 1, len(before_test_list)))
-                    instance_clauses = read_sudoku(sudoku, base_clauses)
+    for option, value in opts:
+        #base_clauses = sudoku_clauses()
+        base_clauses = extended_sudoku_clauses()
+        #base_clauses = minimal_sudoku_clauses()
+        if option in ("-t", "--train"):
+            train_list, test_list = split_list(file_as_list)
+            before_test_list, after_test_list = split_list(test_list)
 
-                    #solve using MiniSAT
-                    dimacs_out(DIMACS_OUT, instance_clauses)
-                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
-                    if not satisfied:
-                        raise Exception("All sudokus should be satisfiable")
-                end_time = time.time()
-                print("time={}".format(end_time - start_time))
+            #Before Training:
+            #################
+            #iterate over the first quarter of sudoku problems to test the performance before
+            #training with reduntant clauses
+            print("Before Training:")
+            process_sudokus(before_test_list, base_clauses)
 
+            #Training:
+            #################
+            #iterate over the half of sudoku problems to train the SAT solver with
+            #reduntant clauses
+            print("Training:")
+            learnt_clauses = process_sudokus(train_list, base_clauses)
+            valid_clauses = check_validity(learnt_clauses, base_clauses)
+            write_out_valid_clauses(valid_clauses)
 
-                #Training:
-                #################
-                #iterate over the half of sudoku problems to train the SAT solver with 
-                #reduntant clauses
-                print("Training:")
-                start_time = time.time()
-                for index, sudoku in enumerate(train_list):
-                    print("{} of {}".format(index + 1, len(train_list)))
-                    instance_clauses = read_sudoku(sudoku, base_clauses)
-
-                    #solve using MiniSAT
-                    dimacs_out(DIMACS_OUT, instance_clauses)
-                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
-                    if not satisfied:
-                        raise Exception("All sudokus should be satisfiable")
-                    if learnt:
-                        for clause in learnt:
-                            global_learnt_clauses.add(clause)
-                    if should_process_validities(index + 1):
-                        #Here we should think about the control flow,
-                        valid_clauses = check_validity(global_learnt_clauses, base_clauses)
-                        for clause in valid_clauses:
-                            valid_clauses.add(clause)
-                end_time = time.time()
-                print("time={}".format(end_time - start_time))
-                with open(VALID_OUT, "+w") as fileobj:
-                    for clause in valid_clauses:
-                        fileobj.write("\nclause ")
-                        for variable in clause.split():
-                            i, j, d = v_inv(abs(int(variable)))
-                            present = "True"
-                            if int(variable) < 0:
-                                present = "False"
-                            fileobj.write("i={}, j={}, d={} {}".format(i, j, d, present))
-
-                #After Training:
-                #################
-                #iterate over the last quarter of sudoku problems to test the performance 
-                #before training with reduntant clauses
-                print("After Training:")
-                start_time = time.time()
-                for index, sudoku in enumerate(after_test_list):
-                    print("{} of {}".format(index + 1, len(after_test_list)))
-                    instance_clauses = read_sudoku(sudoku, base_clauses)
-
-                    #solve using MiniSAT
-                    dimacs_out(DIMACS_OUT, instance_clauses)
-                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
-                    if not satisfied:
-                        raise Exception("All sudokus should be satisfiable")
-                end_time = time.time()
-                print("time={}".format(end_time - start_time))
+            #After Training:
+            #################
+            #iterate over the last quarter of sudoku problems to test the performance
+            #before training with reduntant clauses
+            print("After Training:")
+            process_sudokus(after_test_list, add_clauses(base_clauses, valid_clauses))
 
         if option in ("-p", "--problem"):
-            global_learnt_clauses = set()
-            valid_clauses = set()
-            start_time = time.time()
-
-            #base_clauses = sudoku_clauses()
-            #base_clauses = extended_sudoku_clauses()
-            base_clauses = minimal_sudoku_clauses()
-            with open(value) as fileobj:
-                file_as_list = list(fileobj)
-                #iterate over the set of sudoku problems
-                for index, sudoku in enumerate(file_as_list):
-                    print("{} of {}".format(index + 1, len(file_as_list)))
-                    instance_clauses = read_sudoku(sudoku, base_clauses)
-
-                    #solve using MiniSAT
-                    dimacs_out(DIMACS_OUT, instance_clauses)
-                    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-                    satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
-                    if not satisfied:
-                        raise Exception("All sudokus should be satisfiable")
-                        #for variable in solution:
-                            #i, j, d = v_inv(abs(variable))
-                            #print("variable={}, i={}, j={}, d={}".format(abs(variable), i, j, d))
-                    if learnt:
-                        for clause in learnt:
-                            global_learnt_clauses.add(clause)
-                    if should_process_validities(index + 1):
-                        valid_clauses = check_validity(global_learnt_clauses, base_clauses)
-                        for clause in valid_clauses:
-                            valid_clauses.add(clause)
-                        end_time = time.time()
-                        print("time={}".format(end_time - start_time))
-                        start_time = end_time
-            with open(VALID_OUT, "+w") as fileobj:
-                for clause in valid_clauses:
-                    fileobj.write("\nclause")
-                    for variable in clause.split():
-                        i, j, d = v_inv(abs(int(variable)))
-                        present = "True"
-                        if int(variable) < 0:
-                            present = "False"
-                        fileobj.write("i={}, j={}, d={} {}".format(i, j, d, present))
+            #iterate over the set of sudoku problems
+            learnt_clauses = process_sudokus(file_as_list, base_clauses)
+            valid_clauses = check_validity(learnt_clauses, base_clauses)
+            write_out_valid_clauses(valid_clauses)
 
 if __name__ == "__main__":
     sys.exit(main())
