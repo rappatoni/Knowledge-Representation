@@ -10,6 +10,22 @@
 \maketitle
 
 
+\section{Introduction}
+
+Due to the expressiveness of propositional logic, SAT-solvers allow the automated solution of a great variety of problems. Although the SAT-problem is the paradigmatic NP-complete problem typical complexity of SAT-problems is usually benign. In addition, recent years have seen an immense improvement in the efficiency of SAT-solvers. Thus it is no possible to use SAT-solvers to tackle problems whose conjunctive normal form (CNV) encodings involve hundreds of thousands of variables.
+
+A much smaller problem commonly found for entertainment in newspapers or magazines are Sudoku riddles. The classic Sudoku involves 9x9 cells arranged in matrix - some of them blank some of them prefilled - and four constraints:
+
+\begin{itemize}
+	\item each cell has to be filled with a number from 1-9
+	\item each row must contain each number exactly once
+	\item each column must constain each number exactly once
+	\item each square block (eight on the edges, one in the center) of nine cells must contain each number exactly once
+\end{itemize}
+
+Sudokus are a commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficienty by tackles by tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain specific efficiency of T-solvers. 
+
+For example the DPLL(T)-algorithm
 
 
 Overview:
