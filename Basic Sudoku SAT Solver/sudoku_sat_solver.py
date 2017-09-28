@@ -110,7 +110,7 @@ def unique_blocks():
             res += valid([(i + k % 3, j + k // 3) for k in range(9)])
     return res
 
-def sudoku_clauses():
+def sudoku_clauses(): #this IS the "efficient" encoding
     res = []
     res += valid_cells()
     res += unique_cells()
