@@ -268,7 +268,7 @@ def logically_prune(learned_clauses):
 
     #Check for supersets of encoding clauses (minimal and extended).
 
-    #Delete clauses that were already val-checked on the last iteration
+    #Delete clauses that were already val-checked on the last iteration (i.e. record known non-validities)
 
     return valid_clauses, learned_clauses
 
