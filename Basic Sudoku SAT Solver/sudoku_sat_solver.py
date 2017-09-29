@@ -143,6 +143,67 @@ def extended_sudoku_clauses(): #extended encoding
     assert len(res) == 81*(1+36)+ 27 * 324+ 3 * 81
     return res
 
+def clause_sets(clause_constructor):
+    #this is to transform the entries of a dictionary into sets
+    # of strings for comparison with the valid clauses
+    clauses=set(frozenset(clause) for clause in clause_constructor)
+    return clauses
+
+def extended_sudoku_clauses_with_cats():
+    #I decided to keep things separate so as to not break anything. However, we might
+    #consider using set/tuple data structures generally because of the faster lookup
+    #speed.
+    validcells = clause_sets(valid_cells())
+    uniquecells=clause_sets(unique_cells())
+    validrows=clause_sets(valid_rows())
+    uniquerows=clause_sets(unique_rows())
+    validcolumns=clause_sets( valid_columns())
+    uniquecolumns=clause_sets(unique_columns())
+    validblocks=clause_sets(valid_blocks())
+    uniqueblocks=clause_sets(unique_blocks())
+    res=dict({"vcell":validcells,"ucell":uniquecells,
+              "vrow": validrows,"urow": uniquerows,
+                "vcol": validcolumns,"ucol": uniquecolumns,
+              "vblock": validblocks,"ublock": uniqueblocks})
+
+    # res += {"vcell":valid_cells()}
+    # res += {"ucell":unique_cells()}
+    # res += {"vrow": valid_rows()}
+    # res += {"urow": unique_rows()}
+    # res += {"vcol": valid_columns()}
+    # res += {"ucol": unique_columns()}
+    # res += {"vblock": valid_blocks()}
+    # res += {"ublock": unique_blocks()}
+
+    assert len(res) == 81 * (1 + 36) + 27 * 324 + 3 * 81
+    return res
+
+
+def minimal_sudoku_clauses_with_cats():
+    validcells = clause_sets(valid_cells())
+    uniquerows = clause_sets(unique_rows())
+    uniquecolumns = clause_sets(unique_columns())
+    uniqueblocks = clause_sets(unique_blocks())
+    res = dict({"vcell": validcells, "urow": uniquerows,
+                "ucol": uniquecolumns,"ublock": uniqueblocks})
+
+    assert len(res) == 81 + 27 * 324
+    return res
+
+def efficient_sudoku_clauses_with_cats():
+    validcells = clause_sets(valid_cells())
+    uniquecells = clause_sets(unique_cells())
+    uniquerows = clause_sets(unique_rows())
+    uniquecolumns = clause_sets(unique_columns())
+    uniqueblocks = clause_sets(unique_blocks())
+
+    res = dict({"vcell": validcells,"ucell":uniquecells, "urow": uniquerows,
+                "ucol": uniquecolumns,"ublock": uniqueblocks})
+
+    assert len(res) == 81 * (1 + 36) + 27 * 324
+    return res
+
+
 def minimal_sudoku_clauses(): #minimal Sukoku Encoding
     res = []
     res += valid_cells()
@@ -285,17 +346,38 @@ def heuristically_prune(learned_clauses):
     # than x/n, where n is the number of sudokus.
     pass
 
-def classify_validities(validities):
+def classify_validities(base_clauses_with_cats, valid_clauses):
     """
-
-    :param validities: the set of validities
+    :param base_clauses_with_cats: a ditionary with classes as keys and sets of sets as values
+    :param valid_clauses: the set of valid_clauses
     :return: A set of classes of validities
     """
+    #type of valid_clauses: set of strings. Strings need to be transformed since they are horrible for
+    #comparison. Goal: set of frozensets (frozensets are hashable).
+    #type of base clauses should be a dictionary with sets of frozensets as values and categories as keys
+    #Create classes with base clauses, then compare.
+    #The data structure of the base clauses should be a set of frozensets since that's fastest
+    #(for list lookup time is proportional to the list's length). Frozensets are hashable, lists are not.
+    #final data structure should contain valid clause, base clause, class.
 
-    #Classes: -supersets of encoding clauses (ucell, vcell, urow, vrow, ucol, urow, ublock, vblock)
-    #         -possibly the same for optimized and efficient encoding
-    #         -something new (surprise!)
-    pass
+
+    #Initializing the dictionary of categories and a flip variable
+    cats=["vcell","ucell","vrow","urow","vcol","vblock","ublock","new"]
+    valid_dict={cat: [] for cat in cats}
+    check=0
+    #converting valid_clauses into sets
+    for clause in valid_clauses:
+        frozenset(int(x) for x in clause.strip().split())
+    #Comparing valid clauses and base clauses
+    for clause in valid_clauses:
+        for key in base_clauses_with_cats:
+            for baseclause in base_clauses_with_cats[key]:
+                if baseclause.issubset(clause):
+                    valid_dict[key].append([clause,baseclause])
+                    check=1
+        if check==0:
+            valid_dict["new"].append([clause,baseclause])
+    return valid_dict
 
 def process_sudokus(list_of_sudokus, encoding):
     print("Before Training:")
