@@ -359,7 +359,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     need_processing=set()
     for clause in needz_processing:
         next_clause = False
-        if [literal for literal in clause and literal<=0].count==1 and len(clause)<=8:
+        if [literal for literal in clause and literal<=0].count==1 and len(clause)<=9:
             next_clause = True
             break
         if not next_clause:
