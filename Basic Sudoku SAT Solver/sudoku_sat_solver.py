@@ -337,6 +337,12 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     print(len(needz_processing))
     need_processing = set()
     # we remove all clauses which are subsets of other clauses subsets
+    #Maybe Haukzr can explain this. I have one concern: we might learn a validity and at some
+    #other point a superset of the validity which is hence also valid. We will then end up removing
+    #the shorter validity. In this way we might end up adding only the "cluttered" validities while
+    #missing the "core" that makes them valid in the first place. Therefore I would suggest to at least
+    #especially store the subsets so that in case we discover a validity we can recheck its subsets which
+    # might give us a "minimal" version of the validity.
     for clause in needz_processing:
         next_clause = False
         for clause_other in needz_processing:
