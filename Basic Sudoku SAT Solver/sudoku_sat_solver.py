@@ -337,7 +337,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     print(len(needz_processing))
     need_processing = set()
     # we remove all clauses which are subsets of other clauses subsets
-    #Maybe Haukzr can explain this. I have one concern: we might learn a validity and at some
+    #Maybe Haukur can explain this. I have one concern: we might learn a validity and at some
     #other point a superset of the validity which is hence also valid. We will then end up removing
     #the shorter validity. In this way we might end up adding only the "cluttered" validities while
     #missing the "core" that makes them valid in the first place. Therefore I would suggest to at least
@@ -354,11 +354,12 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
         if not next_clause:
             need_processing.add(clause)
     #Pruning that works for the domain of Sudokus but not in general (tentatively: I have no proof but I believe
-    #no disjunction of pure literals of length less than 9 can be valid in Sudoku)
+    #no disjunction of pure literals of length less than 9 can be valid in Sudoku. No such clauses were found.)
+    #Next attempt: no disjuntion of length less than 9 and just one negated literal can be valid in Sudoku.
     needz_processing=set()
     for clause in need_processing:
         next_clause = False
-        if all(literal>=0 for literal in clause) and len(clause)<=8:
+        if [literal for literal in clause and literal<=0].count==1 and len(clause)<=8:
             next_clause = True
             break
         if not next_clause:
