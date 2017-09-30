@@ -353,8 +353,18 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
                 break
         if not next_clause:
             need_processing.add(clause)
+    #Pruning that works for the domain of Sudokus but not in general (tentatively: I have no proof but I believe
+    #no disjunction of pure literals of length less than 9 can be valid in Sudoku)
+    needz_processing=set()
+    for clause in need_processing:
+        next_clause = False
+        if all(literal>=0 for literal in clause) and len(clause)<=8:
+            next_clause = True
+            break
+        if not next_clause:
+            needz_processing.add(clause)
 
-    print(len(need_processing))
+    print(len(needz_processing))
     end_time = time.time()
     print("pruning: {}".format(end_time - start_time))
 
@@ -371,7 +381,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
 
     #Delete clauses that were already val-checked on the last iteration (i.e. record known non-validities)
 
-    return valid_clauses, need_processing
+    return valid_clauses, needz_processing
 
 def heuristically_prune(learned_clauses):
     """
