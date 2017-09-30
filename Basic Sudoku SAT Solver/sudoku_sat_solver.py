@@ -384,6 +384,19 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
 
     return valid_clauses, needz_processing
 
+def prune_validities(valid_clauses):
+    """
+
+    :param valid_clauses: set of frozensets
+    :return: pruned set of frozensets
+    """
+    #This function should bring down the number of valid clauses. Some of them might be redundant in the sense
+    #that they are supersets of a "core" validity. E.g. if (a, -b, -c, d) and (e, -b,-c,f) and (-b,-c) are
+    #in the set of valid clauses then it seems very likely that (-b,-c) is the "core validity and the other two
+    #can be removed. So this function should loop over the validities by length starting with the shortest and
+    # for each validity, check for its supersets. The supersets should then be removed.
+    #This approach may be to radical but for now I would do it this way, can be adjusted if needed.
+    pass
 def heuristically_prune(learned_clauses):
     """
 
@@ -492,6 +505,7 @@ def main(argv=None):
             learnt_clauses, solutions = process_sudokus(train_list, base_clauses)
             solutions.update(new_solutions)
             valid_clauses = check_validity(learnt_clauses, base_clauses, solutions, base_clauses_with_cats)
+            #prune_validities(valid_clauses)
             classified_validities = classify_validities(base_clauses_with_cats=base_clauses_with_cats, valid_clauses=valid_clauses)
             for key in classified_validities:
                 print("key={}, len={}".format(key, len(classified_validities[key])))
@@ -502,7 +516,7 @@ def main(argv=None):
             #After Training:
             #################
             #iterate over the last quarter of sudoku problems to test the performance
-            #before training with reduntant clauses
+            #after training with reduntant clauses
             print("After Training:")
             process_sudokus(after_test_list, add_clauses(base_clauses, valid_clauses))
 
