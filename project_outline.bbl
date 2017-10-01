@@ -1,0 +1,29 @@
+\begin{thebibliography}{}
+
+\bibitem [\protect \citeauthoryear {%
+Lynce%
+\ \BBA {} Ouaknine%
+}{%
+Lynce%
+\ \BBA {} Ouaknine%
+}{%
+{\protect \APACyear {2006}}%
+}]{%
+sudokusat}
+\APACinsertmetastar {%
+sudokusat}%
+\begin{APACrefauthors}%
+Lynce, I.%
+\BCBT {}\ \BBA {} Ouaknine, J.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2006}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Sudoku as a SAT Problem.} {Sudoku as a sat
+  problem.}{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {ISAIM.} {Isaim.}
+\PrintBackRefs{\CurrentBib}
+
+\end{thebibliography}
