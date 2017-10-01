@@ -30,16 +30,29 @@ For example in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check
 
 Both SAT and SMT approaches have their merits: SAT is a very general approach that requires minimal Human preprocessing while SMT can be much more efficient for specific domains.
 
-In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to d to thade T-box but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the axioms.
+In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to add to the axioms but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the axioms.
 
 Based on previous results we hypothesize that in this way it is possible to train SAT-solvers to become more efficient on the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
 
 The rest of this report is organised as follows: the results of previous work that led us to our hypothesis are summarised in section \ref{related work}; we present our methodology including the choice of dataset, encodings, SAT-solver and performance metrics in section \ref{methods}; in section \ref{algorithm} we propose an algorithm for SAT-theory learning including clause pruning, validity checking and validity pruning and various training protocols; section \ref{results} summarizes our findings; finally, in section \ref{conclusion} we present our conclusions and suggest avenues for further research.
 
+\section{Preliminaries}
+
+We call a set $S$ of propositional disjunctions interpreted as a conjunction a SAT-problem (in CNF). As far as possible we will treat a SAT-solver as a blackbox that tells us whether a SAT-problem in CNF is satisfiable. Given a set of SAT-problems $D=\{S_1,...,S_n\}$ with $\cap_{i=1}^n S_i\neq \emptyset$ in CNF we refer to $D$ as the $domain$ of the problem, $A=\cap_{i=1}^n S_i$ as the $axioms$ of $D$ and to  $C_i=S_i\setminus \cap_{i=1}^n S_i$ as the $claims$ or $assertions$ of problem $i$.
+For $c\in C$, if the SAT-solver returns ``unsatisfiable" for $S=A\cup c$ we call $\neg c$ $valid$ and a $theorem$. An axiom $a\in A$ is $redundant$ iff it is a theorem for any domain $D_{\setminus a}$ with axioms $A_{\setminus a}=A\setminus a$.
+
 \section{Related Work} \label{related work}
 
-A large part of the literature on Sudoku as a SAT-problem is devoted to optimize CNF-encodings for Sudoku with respect to SAT-solver performance. \citeA{sudokusat} suggest and test two encodings: the minimal and the extended encoding
- with respect SAT-solvers' ability to solve Sudokus wihtout search 
+Redundant axioms for Sudoku are mainly considered in constraint programming approaches. E.g. \citeA[11]{demoen2014redundant} find that: ``Redundant constraints are very often good for the performance of CP systems,
+and indeed, all solvers we checked perform much slower (about a factor 2000) with
+a minimal set of big constraints." \citeA{simonis2005sudoku} suggests several such redundant constraints and finds they boost performance of CP propagation schemes. 
+
+As opposed to CP-systems SAT-solvers usually only have very limited propagation schemes such as unit propagation. However, the literature on Sudoku as a SAT-problem considers redundant axioms from a different perspective. A large part of it is devoted to optimizing CNF-encodings for Sudoku with respect to SAT-solver performance. \citeA{sudokusat} suggest and test two encodings: a $minimal$ and an $extended$ encoding. The extended encoding is nothing else than an encoding containing redundant axioms. They compare the encodings efficiency
+with respect to SAT-solvers' ability to solve Sudokus without search. They find among other things that substituting the minimal by the extended encoding increases the likelihood of solving a Sudoku without search using only unit propagation from 1\% to 69\%. In addition, \citeA{optimizedencoding} compared these encodings with respect to runtime over various Sudoku-sizes and found that the extended encoding scales much better with increased problem size.
+
+This apparent convergence in two strains of literature led us to hypothesize that redundant axioms might be beneficial to SAT-solver performance in spite of their limited inference tools. We thus wanted to find out which redundant axioms would be most helpful in strengthening inference and minimizing search. One way to go about this is to look for redundant axioms that the SAT-solver actually $learns$ during the search process.
+
+
 
 \section{Methodology} \label{methods}
 
