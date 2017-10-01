@@ -232,8 +232,8 @@ def redundant_sudoku_clauses():  # Add the following redundant constraints:
     pass
 
 
-def read_sudoku(sudoku_as_line, clauses):
-    instance_clauses = clauses[:]
+def read_sudoku(sudoku_as_line):
+    instance_clauses = []
 
     i = 1
     j = 1
@@ -287,35 +287,30 @@ def read_results(ret, output_file, logfile):
                 learnt.add(frozenset([int(x) for x in clause.strip().split()]))
     return sat, frozenset(solution), learnt
 
-
-def add_clauses(base, extra_clauses):
-    new_clauses = base[:]
-    for clause in extra_clauses:
-        new_clauses.append([x for x in clause])
-    return new_clauses
-
-
 def negate(clause):
     return [[-x] for x in clause]
 
+def is_clause_valid(clause, base_clauses):
+    negated_clauses = negate(clause)
+    add_to_base_dimacs(negated_clauses)
+    ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
+    satisfied, _ , _ = read_results(ret, MINISAT_OUT, LOGFILE)
+    # if we found a clause which is not satisfiable - Success!
+    remove_x_lines_from_base_dimacs(number_of_lines=len(negated_clauses))
+    if not satisfied:
+        return True
+    return False
 
-def check_validity(learnt, base_clauses, solutions, base_clauses_with_cats):
+def check_validity(learnt, base_clauses):
     start_time = time.time()
     valid_clauses = set()
-    valid_clauses_pruned, need_processing = logically_prune(learnt, solutions, base_clauses_with_cats)
-    valid_clauses.update(valid_clauses_pruned)
-    for learn in need_processing:
+    for learn in learnt:
         # for each learnt clause we are interested in if it is a globally valid clause.
         # when we negate a clause, we get many conjuncted clauses
-        negated_clauses = negate(learn)
-        instance_clauses = add_clauses(base_clauses, negated_clauses)
-        dimacs_out(DIMACS_OUT, instance_clauses)
-        ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
-        satisfied, solution, learnt_clauses = read_results(ret, MINISAT_OUT, LOGFILE)
-        # if we found a clause which is not satisfiable - Success!
-        if not satisfied:
+        if is_clause_valid(learn, base_clauses):
             valid_clauses.add((learn,0))
             new_clause_counter -= 1
+
     end_time = time.time()
     print("validity checking (including pruning): {}".format(end_time - start_time))
     return valid_clauses
@@ -360,27 +355,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
                 break
         if not next_clause:
             needz_processing.add(clause)
-    # need_processing = set()
-    # we remove all clauses which are subsets of other clauses subsets
-    # Maybe Haukur can explain this. I have one concern: we might learn a validity and at some
-    # other point a superset of the validity which is hence also valid. We will then end up removing
-    # the shorter validity. In this way we might end up adding only the "cluttered" validities while
-    # missing the "core" that makes them valid in the first place. Therefore I would suggest to at least
-    # especially store the subsets so that in case we discover a validity we can recheck its subsets which
-    # might give us a "minimal" version of the validity.
-    # for clause in needz_processing:
-    #     next_clause = False
-    #     for clause_other in needz_processing:
-    #         if clause == clause_other:
-    #             continue
-    #         if clause.issubset(clause_other):
-    #             next_clause = True
-    #             break
-    #     if not next_clause:
-    #         need_processing.add(clause)
-    # Pruning that works for the domain of Sudokus but not in general (tentatively: I have no proof but I believe
-    # no disjunction of pure literals of length less than 9 can be valid in Sudoku. No such clauses were found.)
-    # Next attempt: no disjuntion of length less than 9 and just one negated literal can be valid in Sudoku.
+
     need_processing = set()
     for clause in needz_processing:
         if not (len([int(literal) <= 0 for literal in clause]) == 1 or len([int(literal) <= 0 for literal in clause]) == 0 and len(clause) <= 9):
@@ -389,19 +364,6 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
 
     end_time = time.time()
     print("pruning: {}".format(end_time - start_time))
-
-    # Delete contradictory clauses: if a clause say (a or b) and its negation are both learned we know
-    # neither is valid. To do this we use that ~(a or b) <=> (~a & ~b). For every set of learned clauses
-    # we collect the unit clauses into a set representing a big conjunction (e.g. (~a & ~b)
-    # becomes {~a,~b}). Then we compare all non-unit-clauses of length smaller or equal to
-    # the cardinality of any of the unit clause sets to the respective unit clause sets. If all
-    # literals of a non-unit-clause appear in negation in a unit clause set, delete the non-unit-clause.
-
-    # Thereafter delete the unit clauses: unit clauses cannot be valid in general Sudokus.
-
-    # Check for supersets of encoding clauses (minimal and extended).
-
-    # Delete clauses that were already val-checked on the last iteration (i.e. record known non-validities)
 
     return valid_clauses, need_processing
 
@@ -468,6 +430,31 @@ def classify_validities(base_clauses_with_cats, valid_clauses):
             valid_dict["new"].append((clause, 0))
     return valid_dict
 
+def essential_check(clause, base_clauses):
+    essential = set()
+    not_essential = set()
+
+    comb = [set(x) for x in itertools.combinations(clause, len(clause)-1)]
+
+    for subset_clause in comb:
+        if is_clause_valid(subset_clause, base_clauses):
+            not_essential.add(clause.difference(subset_clause))
+
+    essential.add(clause.difference(not_essential))
+
+    found_smallest = False
+    smallest_clauses = set()
+    for i in range(0, len(not_essential)):
+        check_clause = set(essential)
+        comb = [set(x) for x in itertools.combinations(not_essential, i)]
+
+        for subset_clause in comb:
+            check_clause.add(subset_clause)
+            if is_clause_valid(check_clause, base_clauses):
+                found_smallest = True
+                smallest_clauses.add(check_clause)
+        if found_smallest:
+            break
 
 def get_number_decisions():
     pattern = re.compile("decisions")
@@ -477,40 +464,78 @@ def get_number_decisions():
             return int(result.group(1))
 
 
-def process_sudokus(list_of_sudokus, encoding):
+def process_sudokus(list_of_sudokus):
     start_time = time.time()
     no_decisions = 0
     learnt_clauses = set()
     solutions = set()
     for index, sudoku in enumerate(list_of_sudokus):
-        instance_clauses = read_sudoku(sudoku, encoding)
-
+        instance_clauses = read_sudoku(sudoku)
         # solve using MiniSAT
-        dimacs_out(DIMACS_OUT, instance_clauses)
+        add_to_base_dimacs(instance_clauses)
         ret = call(COMMAND % (DIMACS_OUT, MINISAT_OUT, LOGFILE), shell=True)
         satisfied, solution, learnt = read_results(ret, MINISAT_OUT, LOGFILE)
         if not satisfied:
             raise Exception("All sudokus should be satisfiable")
         if learnt:
             learnt_clauses.update(learnt)
+        remove_x_lines_from_base_dimacs(number_of_lines=len(instance_clauses))
         solutions.add(solution)
         no_decisions = no_decisions + get_number_decisions()
 
     end_time = time.time()
     print("processing batch of len={}, time={}".format(len(list_of_sudokus), end_time - start_time))
-    print("number of decisions = {}".format(no_decisions))
-    return learnt_clauses, solutions
+    return learnt_clauses, solutions, no_decisions
 
+def get_batches(number_of_batches, length_of_list):
+    batches = []
+    for batch_number in range(number_of_batches):
+        start_partition = int((batch_number / float(number_of_batches)) * length_of_list)
+        end_partition = int(((batch_number + 1) / float(number_of_batches)) * length_of_list)
+        batches.append((start_partition, end_partition))
+    return batches
+
+def create_base_dimacs(clauses):
+    dimacs_out(filename=DIMACS_OUT, clauses=clauses)
+
+def add_to_base_dimacs(clauses):
+    with open(DIMACS_OUT, "a") as fileobj:
+        for clause in clauses:
+            line = " ".join([str(literal) for literal in clause]) + " 0\n"
+            fileobj.write(line)
+
+def remove_x_lines_from_base_dimacs(number_of_lines):
+    with open(DIMACS_OUT, "r") as fileobj:
+        lines = fileobj.readlines()
+        lines = lines[:-number_of_lines]
+    with open(DIMACS_OUT, "w") as fileobj:
+        fileobj.writelines(lines)
+
+def write_validities_to_file(interval_from, interval_to, encoding, validities, batch_size):
+    filename = "_".join([str(interval_from),
+                        str(interval_to),
+                        encoding,
+                        "batch_size",
+                        str(batch_size),
+                        "validities.txt"
+                        ])
+    with open(filename, "w+") as fileobj:
+        for clause in validities:
+            line = " ".join([str(literal) for literal in clause]) + "\n"
+            fileobj.write(line)
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    opts, args = getopt.getopt(argv[1:], "hp:t:l:b:",
-    ["help", "problem", "train", "limit", "batch"])
+    opts, args = getopt.getopt(argv[1:], "hp:t:l:b:i:v:",
+    ["help", "problem", "train", "limit", "batch", "interval", "validities"])
 
     # option processing
     batch = 1
     limit = 0
+    interval_from = 0
+    interval_to = 0
+    validities = set()
     for option, value in opts:
         if option in ("-h", "--help"):
             raise Usage(help_message)
@@ -518,52 +543,57 @@ def main(argv=None):
             limit = int(value)
         if option in ("-b", "--batch"):
             batch = int(value)
+        if option in ("-i", "--interval"):
+            values = [int(x) for x in value.strip().split(":")]
+            print(values)
+            interval_from, interval_to = values[0], values[1]
         if option in ("-t", "--train", "-p", "--problem"):
             with open(value) as fileobj:
                 file_as_list = list(fileobj)
+        if option in ("-v", "--validities"):
+            with open(value) as fileobj:
+                validities = set(fileobj)
     if limit:
-        file_as_list = file_as_list[:limit]
-
+        interval_to = limit
+    if not interval_to:
+        interval_to = len(file_as_list)
+    file_as_list = file_as_list[interval_from:interval_to]
+    print("interval_from={}, interval_to={}".format(interval_from, interval_to))
     print("limit={}".format(limit))
     print("batch={}".format(batch))
+
+    # base_clauses = sudoku_clauses()
+    # base_clauses = extended_sudoku_clauses()
+    base_clauses = minimal_sudoku_clauses()
+    encoding = "minimal"
+    create_base_dimacs(base_clauses)
+    if validities:
+        add_to_base_dimacs(validities)
+
     for option, value in opts:
         new_clause_counter = 0
-        # base_clauses = sudoku_clauses()
-        # base_clauses = extended_sudoku_clauses()
-        base_clauses = minimal_sudoku_clauses()
+
         base_clauses_with_cats = extended_sudoku_clauses_with_cats()
         if option in ("-t", "--train"):
-            train_list, test_list = split_list(file_as_list)
-            before_test_list, after_test_list = split_list(test_list)
             solutions = set()
 
-            # Before Training:
-            #################
-            # iterate over the first quarter of sudoku problems to test the performance before
-            # training with reduntant clauses
-            print("Before Training:")
-            _, new_solutions = process_sudokus(before_test_list, base_clauses)
-            solutions.update(new_solutions)
-
-            # Training:
-            #################
-            # iterate over the half of sudoku problems to train the SAT solver with
-            # reduntant clauses
             print("Training:")
             global_validities = set()
 
-            for batch_number in range(batch):
-                print("batch={}".format(batch_number + 1))
-                start_partition = int((batch_number / float(batch)) * len(train_list))
-                end_partition = int(((batch_number + 1) / float(batch)) * len(train_list))
-                learnt_clauses, solutions = process_sudokus(train_list[start_partition:end_partition], base_clauses)
+            for start_partition, end_partition in get_batches(number_of_batches=batch, length_of_list=len(file_as_list)):
+                learnt_clauses, new_solutions, _ = process_sudokus(file_as_list[start_partition:end_partition])
                 solutions.update(new_solutions)
+
+                valid_clauses = set()
+                valid_clauses_pruned, need_processing = logically_prune(learnt_clauses, solutions, base_clauses_with_cats)
+                valid_clauses.update(valid_clauses_pruned)
                 print("Checking Validities")
-                valid_clauses = check_validity(learnt_clauses, base_clauses, solutions, base_clauses_with_cats)
+                new_valid_clauses = check_validity(need_processing, base_clauses)
+                valid_clauses.update(new_valid_clauses)
                 print("Pruning Validities")
                 valid_clauses_kernel = prune_validities(valid_clauses)
                 global_validities.update(valid_clauses_kernel)
-                base_clauses = add_clauses(base_clauses, valid_clauses_kernel)
+                add_to_base_dimacs(valid_clauses_kernel)
 
             print("Classifying Validities")
             classified_validities = classify_validities(base_clauses_with_cats=base_clauses_with_cats,
@@ -572,18 +602,12 @@ def main(argv=None):
                 print("key={}, len={}".format(key, len(classified_validities[key])))
                 if key == "new" and len(classified_validities[key]) > 0:
                     print(classified_validities[key])
-
-            # After Training:
-            #################
-            # iterate over the last quarter of sudoku problems to test the performance
-            # after training with reduntant clauses
-            print("After Training:")
-            process_sudokus(after_test_list, base_clauses)
+            write_validities_to_file(interval_from, interval_to, encoding, global_validities, batch)
 
         if option in ("-p", "--problem"):
             # iterate over the set of sudoku problems
-            learnt_clauses, solutions = process_sudokus(file_as_list, base_clauses)
-            valid_clauses = check_validity(learnt_clauses, base_clauses, solutions)
+            learnt_clauses, solutions, no_decisions = process_sudokus(file_as_list)
+            print("number of decisions = {}".format(no_decisions))
 
 
 if __name__ == "__main__":
