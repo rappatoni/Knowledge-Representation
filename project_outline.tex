@@ -23,11 +23,11 @@ A much smaller problem commonly found for entertainment in newspapers or magazin
 	\item each square block (eight on the edges, one in the center) of nine cells must contain each number exactly once
 \end{itemize}
 
-Sudokus are a commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficienty by tackles by tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain specific efficiency of T-solvers. 
+Sudokus are a commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficienty by tackles by tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain specific efficiency of T-solvers.
 
 For example in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check a formula $F$ starting from an empty T-box. If the formula is satisfiable it is passed to a specialised T-solver that checks whether it is T-consistent. If not, $\neg F$ is added to the SAT-solvers T-box and so forth.
 
-Both SAT and SMT approaches have their merits: SAT is a very general approach that requires minimal Human preprocessing while SMT can be much more efficient for specific domains. 
+Both SAT and SMT approaches have their merits: SAT is a very general approach that requires minimal Human preprocessing while SMT can be much more efficient for specific domains.
 
 In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to add to the T-box but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the T-box. In this way we train the SAT-solver to become more efficient on the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
 
@@ -35,6 +35,9 @@ In this report we investigate the middle ground between the two approaches for t
 
 \subsection{Sudoku Encodings and DIMACS}
 \subsection{The Minisat-Solver}
+For our experiment we use a SAT solver called Minisat. Minisat implements the DPLL algorithm and additionally implements conflict-driven learning and non-chronological backtracking. As Minisat has an upper limit on the number of learned clauses allowed it employs an activity heuristic when deciding which learned clauses to keep when it. The same heuristic is applied when doing backjumping. The heuristic essentially records which clauses and literals have been in recent conflicts and favors them over "stale" clauses and literals. For more information see (een2003extensible).
+
+For our purposes we needed to record the learned clause for a given conflict. To do this we needed to edit the Minisat code such that when encountering a conflict the deduced learned clause is printed out. By printing out the learned clause straight away we avoided the upper limit of Minisat learned clauses.
 \subsection{The Algorithm}
 \subsection{Measures of Performance}
 
