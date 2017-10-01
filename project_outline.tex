@@ -1,8 +1,9 @@
 \documentclass{article}
 \usepackage{amsfonts}
 \usepackage{amsmath}
-\usepackage{ amssymb }
+\usepackage{amssymb}
 \usepackage{color}
+\usepackage{apacite}
 \begin{document}
 
 \title{A Theory Learning SAT-Solver for Sudokus\\
@@ -12,7 +13,7 @@
 
 \section{Introduction}
 
-Due to the expressiveness of propositional logic, SAT-solvers allow the automated solution of a great variety of problems. Although the SAT-problem is the paradigmatic NP-complete problem typical complexity of SAT-problems is usually benign. In addition, recent years have seen an immense improvement in the efficiency of SAT-solvers. Thus it is no possible to use SAT-solvers to tackle problems whose conjunctive normal form (CNV) encodings involve hundreds of thousands of variables.
+Due to the expressiveness of propositional logic, SAT-solvers allow the automated solution of a great variety of problems. Although the SAT-problem is the paradigmatic NP-complete problem typical complexity of SAT-problems is usually benign. In addition, recent years have seen an immense improvement in the efficiency of SAT-solvers. Thus it is no possible to use SAT-solvers to tackle problems whose conjunctive normal form (CNF) encodings involve hundreds of thousands of variables.
 
 A much smaller problem commonly found for entertainment in newspapers or magazines are Sudoku riddles. The classic Sudoku involves 9x9 cells arranged in matrix - some of them blank some of them prefilled - and four constraints:
 
@@ -25,21 +26,46 @@ A much smaller problem commonly found for entertainment in newspapers or magazin
 
 Sudokus are a commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficienty by tackles by tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain specific efficiency of T-solvers. 
 
-For example in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check a formula $F$ starting from an empty T-box. If the formula is satisfiable it is passed to a specialised T-solver that checks whether it is T-consistent. If not, $\neg F$ is added to the SAT-solvers T-box and so forth.
+For example in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check a formula $F$ starting from an empty T-box. If the formula is satisfiable it is passed to a specialised T-solver that checks whether it is T-consistent. If not, $\neg F$ is added to the SAT-solver's axioms and so forth.
 
 Both SAT and SMT approaches have their merits: SAT is a very general approach that requires minimal Human preprocessing while SMT can be much more efficient for specific domains. 
 
-In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to add to the T-box but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the T-box. In this way we train the SAT-solver to become more efficient on the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
+In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to d to thade T-box but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the axioms.
 
-\section{Formal Framework and Preliminaries}
+Based on previous results we hypothesize that in this way it is possible to train SAT-solvers to become more efficient on the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
 
-\subsection{Sudoku Encodings and DIMACS}
-\subsection{The Minisat-Solver}
-\subsection{The Algorithm}
-\subsection{Measures of Performance}
+The rest of this report is organised as follows: the results of previous work that led us to our hypothesis are summarised in section \ref{related work}; we present our methodology including the choice of dataset, encodings, SAT-solver and performance metrics in section \ref{methods}; in section \ref{algorithm} we propose an algorithm for SAT-theory learning including clause pruning, validity checking and validity pruning and various training protocols; section \ref{results} summarizes our findings; finally, in section \ref{conclusion} we present our conclusions and suggest avenues for further research.
 
-\section{Results}
-\section{Conclusion}
+\section{Related Work} \label{related work}
+
+A large part of the literature on Sudoku as a SAT-problem is devoted to optimize CNF-encodings for Sudoku with respect to SAT-solver performance. \citeA{sudokusat} suggest and test two encodings: the minimal and the extended encoding
+ with respect SAT-solvers' ability to solve Sudokus wihtout search 
+
+\section{Methodology} \label{methods}
+
+We decided to test our hypothesis experimentally. In order to do this, it was necessary to choose a suitable dataset, SAT-solver and a meaningful metric of performance as well as a CNF-encoding of Sudoku.  
+
+\subsection{Dataset} \label{dataset}
+
+
+
+\subsection{Sudoku Encodings and DIMACS} \label{encodings}
+
+\subsection{The Minisat-Solver} \label{minisat}
+
+\subsection{Measures of Performance} \label{measures}
+
+\section{The learning Algorithm} \label{algorithm}
+\subsection{Pseudocode} \label{pseudocode}
+\subsection{Clause Pruning} \label{clause pruning}
+\subsection{Validity Checking} \label{val checking}
+\subsection{Validity Pruning} \label{val pruning}
+\subsection{Training} \label{training}
+
+\section{Results} \label{results}
+
+\section{Conclusion} \label{conclusion}
+
 
 
 Overview:
@@ -117,5 +143,9 @@ Code:
     %globally_valid_clauses.append(learned_clause)
 
 %print(globally_valid_clauses)
+
+\bibliographystyle{apacite}
+\bibliography{references}
+
 
 \end{document}
