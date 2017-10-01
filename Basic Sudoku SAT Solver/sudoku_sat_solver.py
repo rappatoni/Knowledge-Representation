@@ -4,6 +4,7 @@ sudoku_sat_solver.py
 """
 
 import sys
+import re
 import time
 import getopt
 import fileinput
@@ -110,7 +111,7 @@ def unique_blocks():
             res += valid([(i + k % 3, j + k // 3) for k in range(9)])
     return res
 
-def sudoku_clauses(): #this IS the "efficient" encoding
+def sudoku_clauses(): #this is the "efficient" encoding
     res = []
     res += valid_cells()
     res += unique_cells()
@@ -168,7 +169,6 @@ def extended_sudoku_clauses_with_cats():
 
     return res
 
-
 def minimal_sudoku_clauses_with_cats():
     validcells = clause_sets(valid_cells())
     uniquerows = clause_sets(unique_rows())
@@ -190,7 +190,6 @@ def efficient_sudoku_clauses_with_cats():
                 "ucol": uniquecolumns,"ublock": uniqueblocks})
 
     return res
-
 
 def minimal_sudoku_clauses(): #minimal Sukoku Encoding
     res = []
@@ -291,6 +290,7 @@ def check_validity(learnt, base_clauses, solutions, base_clauses_with_cats):
             valid_clauses.add(learn)
     end_time = time.time()
     print("validity checking (including pruning): {}".format(end_time - start_time))
+    print(len(valid_clauses))
     return valid_clauses
 
 def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
@@ -359,7 +359,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     need_processing=set()
     for clause in needz_processing:
         next_clause = False
-        if [literal for literal in clause and literal<=0].count==1 and len(clause)<=9:
+        if [int(literal)>=0 for literal in clause].count==1 and len(clause)<=9:
             next_clause = True
             break
         if not next_clause:
@@ -386,7 +386,6 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
 
 def prune_validities(valid_clauses):
     """
-
     :param valid_clauses: set of frozensets
     :return: pruned set of frozensets
     """
@@ -396,7 +395,16 @@ def prune_validities(valid_clauses):
     #can be removed. So this function should loop over the validities by length starting with the shortest and
     # for each validity, check for its supersets. The supersets should then be removed.
     #This approach may be to radical but for now I would do it this way, can be adjusted if needed.
-    pass
+    remove_entries = set()
+    for clause_size in range(2,6):
+        core_candidates = [clause for clause in valid_clauses if len(clause) == clause_size]
+        for clause in core_candidates:
+            for valid_entry in valid_clauses:
+                if valid_entry.issubset(clause):
+                    valid_clauses.add(valid_entry)
+    valid_clauses = valid_clauses.difference(remove_entries)
+    print(len(valid_clauses))
+
 def heuristically_prune(learned_clauses):
     """
 
@@ -440,8 +448,16 @@ def classify_validities(base_clauses_with_cats, valid_clauses):
             valid_dict["new"].append((clause,0))
     return valid_dict
 
+def get_number_decisions():
+    pattern = re.compile("decisions")
+    for i, line in enumerate(open('minisat.log')):
+        for match in re.finditer(pattern, line):
+            result = re.search('decisions             : (.*)       ', line)
+            return int(result.group(1))
+
 def process_sudokus(list_of_sudokus, encoding):
     start_time = time.time()
+    no_decisions = 0
     learnt_clauses = set()
     solutions = set()
     for index, sudoku in enumerate(list_of_sudokus):
@@ -456,9 +472,12 @@ def process_sudokus(list_of_sudokus, encoding):
         if learnt:
             learnt_clauses.update(learnt)
         solutions.add(solution)
+        no_decisions = no_decisions + get_number_decisions()
+
 
     end_time = time.time()
     print("processing batch of len={}, time={}".format(len(list_of_sudokus), end_time - start_time))
+    print("number of decisions = {}".format(no_decisions))
     return learnt_clauses, solutions
 
 def main(argv=None):
@@ -497,6 +516,7 @@ def main(argv=None):
             print("Before Training:")
             _,new_solutions = process_sudokus(before_test_list, base_clauses)
             solutions.update(new_solutions)
+
             #Training:
             #################
             #iterate over the half of sudoku problems to train the SAT solver with
@@ -504,15 +524,17 @@ def main(argv=None):
             print("Training:")
             learnt_clauses, solutions = process_sudokus(train_list, base_clauses)
             solutions.update(new_solutions)
+            print("Checking Validities")
             valid_clauses = check_validity(learnt_clauses, base_clauses, solutions, base_clauses_with_cats)
-            #prune_validities(valid_clauses)
+            print("Pruning Validities")
+            prune_validities(valid_clauses)
+            print("Classifying Validities")
             classified_validities = classify_validities(base_clauses_with_cats=base_clauses_with_cats, valid_clauses=valid_clauses)
             for key in classified_validities:
                 print("key={}, len={}".format(key, len(classified_validities[key])))
                 if key == "new" and len(classified_validities[key]) > 0:
                     print(classified_validities[key])
-
-
+                    
             #After Training:
             #################
             #iterate over the last quarter of sudoku problems to test the performance
