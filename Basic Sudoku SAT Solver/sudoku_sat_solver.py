@@ -386,10 +386,10 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     # Next attempt: no disjuntion of length less than 9 and just one negated literal can be valid in Sudoku.
     need_processing = set()
     for clause in needz_processing:
-        if not (len([int(literal) <= 0 for literal in clause])==1 and len(clause) <= 9):
+        if not (len([int(literal) <= 0 for literal in clause]) == 1 or len([int(literal) <= 0 for literal in clause]) == 0 and len(clause) <= 9):
             need_processing.add(clause)
-
     print(len(need_processing))
+    
     end_time = time.time()
     print("pruning: {}".format(end_time - start_time))
 
@@ -426,7 +426,7 @@ def prune_validities(valid_clauses):
         for clause in core_candidates:
             for valid_entry in valid_clauses:
                 if valid_entry.issubset(clause):
-                    valid_clauses.add(valid_entry)
+                    remove_entries.add(valid_entry)
     valid_clauses = valid_clauses.difference(remove_entries)
     print(len(valid_clauses))
 
