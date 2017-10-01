@@ -1,0 +1,108 @@
+\begin{thebibliography}{}
+
+\bibitem [\protect \citeauthoryear {%
+Demoen%
+\ \BBA {} de~la Banda%
+}{%
+Demoen%
+\ \BBA {} de~la Banda%
+}{%
+{\protect \APACyear {2014}}%
+}]{%
+demoen2014redundant}
+\APACinsertmetastar {%
+demoen2014redundant}%
+\begin{APACrefauthors}%
+Demoen, B.%
+\BCBT {}\ \BBA {} de~la Banda, M\BPBI G.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2014}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Redundant sudoku rules} {Redundant sudoku rules}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Theory and Practice of Logic
+  Programming}{14}{3}{363--377}.
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Kwon%
+\ \BBA {} Jain%
+}{%
+Kwon%
+\ \BBA {} Jain%
+}{%
+{\protect \APACyear {2006}}%
+}]{%
+optimizedencoding}
+\APACinsertmetastar {%
+optimizedencoding}%
+\begin{APACrefauthors}%
+Kwon, G.%
+\BCBT {}\ \BBA {} Jain, H.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2006}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Optimized CNF encoding for sudoku puzzles} {Optimized
+  cnf encoding for sudoku puzzles}.{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {Proc. 13th International Conference on Logic for
+  Programming Artificial Intelligence and Reasoning (LPAR2006)} {Proc. 13th
+  international conference on logic for programming artificial intelligence and
+  reasoning (lpar2006)}\ (\BPGS\ 1--5).
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Lynce%
+\ \BBA {} Ouaknine%
+}{%
+Lynce%
+\ \BBA {} Ouaknine%
+}{%
+{\protect \APACyear {2006}}%
+}]{%
+sudokusat}
+\APACinsertmetastar {%
+sudokusat}%
+\begin{APACrefauthors}%
+Lynce, I.%
+\BCBT {}\ \BBA {} Ouaknine, J.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2006}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Sudoku as a SAT Problem.} {Sudoku as a sat
+  problem.}{\BBCQ}
+\newblock
+\BIn{} \APACrefbtitle {ISAIM.} {Isaim.}
+\PrintBackRefs{\CurrentBib}
+
+\bibitem [\protect \citeauthoryear {%
+Simonis%
+}{%
+Simonis%
+}{%
+{\protect \APACyear {2005}}%
+}]{%
+simonis2005sudoku}
+\APACinsertmetastar {%
+simonis2005sudoku}%
+\begin{APACrefauthors}%
+Simonis, H.%
+\end{APACrefauthors}%
+\unskip\
+\newblock
+\APACrefYearMonthDay{2005}{}{}.
+\newblock
+{\BBOQ}\APACrefatitle {Sudoku as a constraint problem} {Sudoku as a constraint
+  problem}.{\BBCQ}
+\newblock
+\APACjournalVolNumPages{Proc. 4th Int. Works. Modelling and Reformulating
+  Constraint Satisfaction Problems}{}{}{13--27}.
+\PrintBackRefs{\CurrentBib}
+
+\end{thebibliography}
