@@ -463,6 +463,17 @@ def get_number_decisions():
             result = re.search('decisions             : (.*)       ', line)
             return int(result.group(1))
 
+def decode_clause(clause):
+    row, column = 10, 10;
+    new_sudoku = [[0 for x in range(1,row)] for y in range(1,column)] 
+
+    for literal in clause.split():
+        i, j, d = v_inv(abs(int(literal)))
+        new_sudoku[i-1][j-1] = d
+
+    b = [variable for row in new_sudoku for variable in row]
+    sudoku = ''.join(str(e) for e in b)
+    print(sudoku)
 
 def process_sudokus(list_of_sudokus):
     start_time = time.time()

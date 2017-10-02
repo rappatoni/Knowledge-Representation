@@ -58,28 +58,71 @@ This apparent convergence in two strains of literature led us to hypothesize tha
 
 We decided to test our hypothesis experimentally. In order to do this, it was necessary to choose a suitable dataset, SAT-solver and a meaningful metric of performance as well as a CNF-encoding of Sudoku.  
 
-\subsection{Dataset} \label{dataset}
+\subsection{Dataset}
+We used the collection of minimum proper sudokus (with 17 givens and proper meaning it has a unique solution).  A minimal Sudoku is a Sudoku from which no given can be removed leaving it a proper Sudoku. This dataset consists of 49151 sudokus and is provided by the University of Western Australia. Refer this \cite{sudokudataset}to access the dataset.
 
-
-
-\subsection{Sudoku Encodings and DIMACS} \label{encodings}
-
-\subsection{The Minisat-Solver} \label{minisat}
-
-\subsection{Measures of Performance} \label{measures}
-
-\section{The learning Algorithm} \label{algorithm}
-\subsection{Pseudocode} \label{pseudocode}
-\subsection{Clause Pruning} \label{clause pruning}
-\subsection{Validity Checking} \label{val checking}
-\subsection{Validity Pruning} \label{val pruning}
-\subsection{Training} \label{training}
-
-\section{Results} \label{results}
-
-\section{Conclusion} \label{conclusion}
+We used 10000 sudokus to measure the performance of the SAT solver across different encodings and different base clauses. We used 5000 sudokus to train our SAT solver to learn new clauses which are valid for sudokus. 
 
 \subsection{Sudoku Encodings and DIMACS}
+A given sudoku can be formulated as a SAT formula which is satisfiable if and only if the puzzle has a solution. Subsequently, the formula can be checked for satisfiability using SAT solver of our choice. A formula in CNF is represented by a set of clauses. The standard input format for most SAT solvers is CNF. Various encodings are known for encoding Sudoku as a CNF formula. We use three different types of encoding for our experiments which are: the minimal encoding , the efficient encoding , and the extended encoding which are used to formulate Sudoku into a set of clauses. For more information refer \cite{sudokusat} and \cite{optimizedencoding}
+
+The difference in the encoding is concerned with removing the redundant clauses. One advantage of removing such redundancy is that the size of the CNF file produced can be significantly smaller. But according to our hypothesis we want to investigate the performance of the SAT solver by introducing interesting redundant clauses.
+
+SAT problem is represented using propositional variables, which can be assigned truth values 1(true) or 0(false). In an $9\times 9$ Sudoku puzzle each cell can contain a number from 1 to 9. Thus, each cell is associated with 9 propositional variables. Let a 3-tuple $(r, c, v)$ denote a variable which is true if and only if the cell in row $r$ and column $c$ is assigned a number $v$; i.e. $[r, c] = v$. The resulting set of propositional variables is $V = {(r, c, v)|1 \leq r, c, v \leq n}$. Sudoku rules are represented as a set of clauses to guarantee that each row, column and block contains only one instance of each number from 1 to n. The following set of clauses refers to each cell, each row, each column and each block having at least one number from 1 to n (i.e. $definedness$) and at most one number from 1 to n (i.e. $uniqueness$). We use a subscript $d$ to denote definedness constraints and subscript $u$ to denote the uniqueness constraints. \\\\
+$\begin{aligned}
+Cell_{d} &= \bigwedge^{n}_{r=1}\bigwedge^{n}_{c=1}\bigwedge^{n}_{v=1} (r,c,v) &\\
+Cell_{u} &= \bigwedge^{n}_{r=1}\bigwedge^{n}_{c=1}\bigwedge^{n-1}_{v_{i}=1} \bigvee^{n}_{v_{j}=v_{i}+1} \neg (r,c,v_{i}) \vee \neg (r,c,v_{j}) &\\
+Row_{d} &= \bigwedge^{n}_{r=1}\bigwedge^{n}_{v=1}\bigvee^{n}_{c=1} (r,c,v) &\\
+Row_{u} &= \bigwedge^{n}_{r=1}\bigwedge^{n}_{v=1}\bigwedge^{n-1}_{c_{i}=1} \bigwedge^{n}_{c_{j}=c_{i}+1} \neg (r,c_{i},v) \vee \neg (r,c_{j},v) &\\
+Col_{d} &= \bigwedge^{n}_{c=1}\bigwedge^{n}_{v=1}\bigvee^{n}_{r=1} (r,c,v) &\\
+Col_{u} &= \bigwedge^{n}_{c=1}\bigwedge^{n}_{v=1}\bigwedge^{n-1}_{r_{i}=1} \bigwedge^{n}_{r_{j}=r_{i}+1} \neg (r_{i},c,v) \vee \neg (r_{j},c,v) &\\
+Block_{d} &= \bigwedge^{\sqrt{n}}_{r_{offs}=1}\bigwedge^{\sqrt{n}}_{c_{offs}=1}\bigwedge^{n}_{v=1}\bigvee_{r=1}^{\sqrt{n}}\bigvee_{c=1}^{\sqrt{n}}(r_{offs}*\sqrt{n}+r,c_{offs}*\sqrt{n}+c,v) &\\
+Block_{d} &= \bigwedge^{\sqrt{n}}_{r_{offs}=1}\bigwedge^{\sqrt{n}}_{c_{offs}=1}\bigwedge^{n}_{v=1}\bigwedge_{r=1}^{n}\bigwedge_{c=r+1}^{n} &\\ & \neg (r_{offs}*\sqrt{n}+(r \space mod \sqrt{n}),c_{offs}*\sqrt{n}+(r \space mod \sqrt{n}),v) &\\
+& \vee \neg (r_{offs}\sqrt{n}+(r \space mod \sqrt{n}),c_{offs}*\sqrt{n}(c \space mod \sqrt{n}),v)
+\end{aligned}$
+
+In addition to these sets, one more set of clauses is needed to represent fixed cells. A fixed cell contains a pre-assigned number; for example, if $[1,3] = 6$ in the input puzzle, then the cell $[1,3]$ is a fixed cell containing number $6$. Let $V^{+}$ = {$(r, c, v) \in V [r, c]$ is a fixed cell and has a pre-assigned value $v$} be a set of variables representing fixed cells and $k$ be the number of such fixed cells. The fixed cells are naturally represented as unit clauses in the encoding of the sudoku: \\
+
+$\begin{aligned}
+Assigned &= \bigwedge^{k}_{i=1}(r,c,v),  where (r,c,v) \in V^{+}
+\end{aligned}$
+
+The three encodings mentioned above take the following constraints: \\
+
+$\begin{aligned}
+\phi_{minimal} &= Cell_{d} \wedge Row_{u} \wedge Col_{u} \wedge Block_{u} \wedge Assigned &\\
+\phi_{efficient} &= Cell_{d} \wedge Cell_{u} \wedge Row_{u} \wedge Col_{u} \wedge Block_{u} \wedge Assigned &\\ 
+\phi_{extended} &= Cell_{d} \wedge Cell_{u} \wedge Row_{d} \wedge Row_{u} \wedge Col_{d} \wedge Col_{u} \wedge &\\ 
+& Block_{d} \wedge Block_{u} \wedge Assigned &\\ 
+\end{aligned}$ \\
+
+Hence we use the above encode to form the base clauses which are passed to the SAT solvers along with the given sudoku clauses. We use Python language to test our experiments and represent the clauses in th DIMACS format. It has the following format:\\\\
+At the begining of the file there can exist one or more comment line. Comment lines start with a 'c' \\
+
+p FORMAT VARIABLES CLAUSES  \\
+
+FORMAT is for programs to detect which format is to be expected.
+
+VARIABLES is the count of number of unique variables in the expression
+
+CLAUSES is the number of clauses in the expression\\
+
+This line is followed by the information in each clause. Unique variables are enumerated from 1 to n. A negation is represented as '-'. Example: $(A \vee \neg B \vee C)$, $(B \vee D \vee E)$  and $(D \vee F)$ are represented in DIMACS format as: \\
+
+c This is a comment
+
+c This is another comment
+
+p cnf 6 3
+
+1 -2 3 0
+
+2 4 5 0
+
+4 6 0
+
+
+
 \subsection{The Minisat-Solver}
 For our experiment we use a SAT solver called Minisat. Minisat implements the DPLL algorithm and additionally implements conflict-driven learning and non-chronological backtracking. As Minisat has an upper limit on the number of learned clauses allowed it employs an activity heuristic when deciding which learned clauses to keep when it. The same heuristic is applied when doing backjumping. The heuristic essentially records which clauses and literals have been in recent conflicts and favors them over "stale" clauses and literals. For more information see (een2003extensible).
 
@@ -164,6 +207,17 @@ Code:
     %globally_valid_clauses.append(learned_clause)
 
 %print(globally_valid_clauses)
+\section{The learning Algorithm} \label{algorithm}
+\subsection{Pseudocode} \label{pseudocode}
+\subsection{Clause Pruning} \label{clause pruning}
+\subsection{Validity Checking} \label{val checking}
+\subsection{Validity Pruning} \label{val pruning}
+\subsection{Training} \label{training}
+
+\section{Results} \label{results}
+
+\section{Conclusion} \label{conclusion}
+
 
 \bibliographystyle{apacite}
 \bibliography{references}
