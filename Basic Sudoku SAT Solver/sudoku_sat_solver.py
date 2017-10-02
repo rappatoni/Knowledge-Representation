@@ -557,7 +557,9 @@ def main(argv=None):
                 file_as_list = list(fileobj)
         if option in ("-v", "--validities"):
             with open(value) as fileobj:
-                validities = set(fileobj)
+                lines = fileobj.readlines()
+                for line in lines:
+                    validities.add(frozenset(line.strip().split()))
     if limit:
         interval_to = limit
     if not interval_to:
@@ -567,10 +569,10 @@ def main(argv=None):
     print("limit={}".format(limit))
     print("batch={}".format(batch))
 
-    # base_clauses = sudoku_clauses()
-    # base_clauses = extended_sudoku_clauses()
+    #base_clauses = sudoku_clauses()
     base_clauses = extended_sudoku_clauses()
-    encoding = "extended"
+    #base_clauses = minimal_sudoku_clauses()
+    encoding = "minimal"
     create_base_dimacs(base_clauses)
     if validities:
         add_to_base_dimacs(validities)
