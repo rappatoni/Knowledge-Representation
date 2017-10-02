@@ -8,6 +8,7 @@ import re
 import time
 import getopt
 import fileinput
+import itertools
 from pprint import pprint
 from math import sqrt
 from subprocess import call
@@ -308,8 +309,7 @@ def check_validity(learnt, base_clauses):
         # for each learnt clause we are interested in if it is a globally valid clause.
         # when we negate a clause, we get many conjuncted clauses
         if is_clause_valid(learn, base_clauses):
-            valid_clauses.add((learn,0))
-            new_clause_counter -= 1
+            valid_clauses.add((learn, 0))
 
     end_time = time.time()
     print("validity checking (including pruning): {}".format(end_time - start_time))
@@ -368,7 +368,7 @@ def logically_prune(learned_clauses, solutions, base_clauses_with_cats):
     return valid_clauses, need_processing
 
 
-def prune_validities(valid_clauses):
+def prune_validities(valid_clauses, base_clauses):
     """
     :param valid_clauses: set of frozensets
     :return: pruned set of frozensets
@@ -381,7 +381,10 @@ def prune_validities(valid_clauses):
     # This approach may be to radical but for now I would do it this way, can be adjusted if needed.
     kernel = set()
     for clause, base in valid_clauses:
-        kernel.add(base)
+        if not base:
+            kernel.update(essential_check(clause, base_clauses))
+        else:
+            kernel.add(base)
     print("valid_clauses={}".format(len(valid_clauses)))
     print("valid_kernel={}".format(len(kernel)))
     return kernel
@@ -430,31 +433,33 @@ def classify_validities(base_clauses_with_cats, valid_clauses):
             valid_dict["new"].append((clause, 0))
     return valid_dict
 
-def essential_check(clause, base_clauses):
+def essential_check(clause_to_check, base_clauses):
     essential = set()
     not_essential = set()
+    clause = frozenset(clause_to_check)
 
-    comb = [set(x) for x in itertools.combinations(clause, len(clause)-1)]
+    comb = [frozenset(x) for x in itertools.combinations(clause, len(clause)-1)]
 
     for subset_clause in comb:
         if is_clause_valid(subset_clause, base_clauses):
-            not_essential.add(clause.difference(subset_clause))
+            not_essential.update(clause.difference(subset_clause))
 
-    essential.add(clause.difference(not_essential))
+    essential.update(clause.difference(not_essential))
+    essential = frozenset(essential)
+    not_essential = frozenset(not_essential)
 
     found_smallest = False
     smallest_clauses = set()
     for i in range(0, len(not_essential)):
-        check_clause = set(essential)
-        comb = [set(x) for x in itertools.combinations(not_essential, i)]
-
+        comb = [frozenset(x) for x in itertools.combinations(not_essential, i)]
         for subset_clause in comb:
-            check_clause.add(subset_clause)
+            check_clause = frozenset(essential.union(subset_clause))
             if is_clause_valid(check_clause, base_clauses):
                 found_smallest = True
                 smallest_clauses.add(check_clause)
         if found_smallest:
             break
+    return smallest_clauses
 
 def get_number_decisions():
     pattern = re.compile("decisions")
@@ -564,15 +569,13 @@ def main(argv=None):
 
     # base_clauses = sudoku_clauses()
     # base_clauses = extended_sudoku_clauses()
-    base_clauses = minimal_sudoku_clauses()
-    encoding = "minimal"
+    base_clauses = extended_sudoku_clauses()
+    encoding = "extended"
     create_base_dimacs(base_clauses)
     if validities:
         add_to_base_dimacs(validities)
 
     for option, value in opts:
-        new_clause_counter = 0
-
         base_clauses_with_cats = extended_sudoku_clauses_with_cats()
         if option in ("-t", "--train"):
             solutions = set()
@@ -591,7 +594,7 @@ def main(argv=None):
                 new_valid_clauses = check_validity(need_processing, base_clauses)
                 valid_clauses.update(new_valid_clauses)
                 print("Pruning Validities")
-                valid_clauses_kernel = prune_validities(valid_clauses)
+                valid_clauses_kernel = prune_validities(valid_clauses, base_clauses)
                 global_validities.update(valid_clauses_kernel)
                 add_to_base_dimacs(valid_clauses_kernel)
 
