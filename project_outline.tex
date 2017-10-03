@@ -306,13 +306,13 @@ The second clause can then be interpreted as stating that when you a number $x$ 
 The third clause is similar to the second clause but rather states that when a number is placed in a column which is a part of some block, the number in that block needs to be from a different column. We also found clauses which were like the second clause but exchanged row for column.
 
 \section{Conclusion} \label{conclusion}
-In our project we hypothesized it would be possible to train SAT-solvers, Minisat in particular, to become more efficient in the current domain by extending the encoding to include valid learnt clauses. We measured the number decisions made by the SAT-solver to measure success. To do this we used the collection of minimum proper sudokus.
+In our project, we hypothesized it would be possible to train SAT-solvers, Minisat, in particular, to become more efficient in the current domain by extending the encoding to include valid learnt clauses. We measured the number decisions made by the SAT-solver to measure success. To do this we used the collection of minimum proper sudokus.
 
 We recorded learnt clauses reported by the SAT-solver and checked if they were valid for all sudokus. Due to the high number of learnt clauses and the fact that for each learnt clause we had to solve a SAT problem it would have been unfeasible to process all learnt clauses this way so we devised ways of pruning the learnt clauses. The new axioms were then classified.
 
-The efficient and minimal encoding make roughly the same number of decisions. The extended encoding makes about 1% of the decisions made by the other encodings. The learnt axioms were mostly from the efficient encoding, $Row_u$, $Block_u$ and $Cell_u$. The longer disjunctions, $Row_d$, $Block_d$ and $Col_d$ speed up inference capabilities of Minisat more than the other axioms. We were therefore unable to train the SAT-solver to become more efficient.
+The efficient and minimal encoding make roughly the same number of decisions. The extended encoding makes about 1% of the decisions made by the other encodings. The learnt axioms were mostly from the efficient encoding, $Row_u$, $Block_u$ and $Cell_u$. The longer disjunctions, $Row_d$, $Block_d$ and $Col_d$ speed up inference capabilities of Minisat more than the other axioms. We were, therefore, unable to train the SAT-solver to become more efficient.
 
-During this process some new axioms were found which were not in the extended encoding but might prove useful if generalized and added to the extended encoding. Future research could measure the effectiveness of these new axioms on the number of decisions made. It would also be worth looking into if a SAT-solver could be optimized to learn valid clauses when working on a closed domain of problems.
+During this process, some new axioms were found which were not in the extended encoding but might prove useful if generalized and added to the extended encoding. Future research could measure the effectiveness of these new axioms on the number of decisions made. It would also be worth looking into if a SAT-solver could be optimized to learn valid clauses when working on a closed domain of problems.
 
 \bibliographystyle{apacite}
 \bibliography{references}
