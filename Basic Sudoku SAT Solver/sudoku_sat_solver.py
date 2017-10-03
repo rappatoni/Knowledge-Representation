@@ -419,7 +419,7 @@ def classify_validities(base_clauses_with_cats, valid_clauses):
 
 
     # Initializing the dictionary of categories and a flip variable
-    cats = ["vcell", "ucell", "vrow", "urow", "vcol", "vblock", "ublock", "new"]
+    cats = ["vcell", "ucell", "vrow", "urow", "vcol", "ucol", "vblock", "ublock", "new"]
     valid_dict = {cat: [] for cat in cats}
     # Comparing valid clauses and base clauses
     for clause in valid_clauses:
@@ -470,7 +470,7 @@ def get_number_decisions():
 
 def decode_clause(clause):
     row, column = 10, 10;
-    new_sudoku = [[0 for x in range(1,row)] for y in range(1,column)] 
+    new_sudoku = [[0 for x in range(1,row)] for y in range(1,column)]
 
     for literal in clause.split():
         i, j, d = v_inv(abs(int(literal)))
