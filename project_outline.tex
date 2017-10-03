@@ -28,59 +28,55 @@
 %Due to the expressiveness of propositional logic, SAT-solvers allow the automated solution of a great variety of problems. Although the SAT-problem is the paradigmatic NP-complete problem typical complexity of SAT-problems is usually benign. In addition, recent years have seen an immense improvement in the efficiency of SAT-solvers. Thus it is no possible to use SAT-solvers to tackle problems whose conjunctive normal form (CNF) encodings involve hundreds of thousands of variables.%
 
 %A much smaller problem commonly found for entertainment in newspapers or magazines are Sudoku riddles.%
-Sudokus are commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficiency by  tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain specific efficiency of T-solvers.
+Sudokus are commonly studied paradigm for SAT-solvers as well as constraint programming. Constraint programming sacrifices generality for efficiency by tailoring solvers for hard problems using various constraints that go beyond the mere axioms of propositional logic. A common approach in constraint programming are ``Satisfiablity-Modulo-Theories"(SMT)-solvers. They supplement a SAT-solver by a specialised theory(T)-solver exploiting both the high degree of optimization of SAT-solvers and the domain-specific efficiency of T-solvers.
 
-For example in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check a formula $F$ starting from an empty T-box. If the formula is satisfiable it is passed to a specialised T-solver that checks whether it is T-consistent. If not, $\neg F$ is added to the SAT-solver's axioms and so forth.
+For example, in the DPLL(T)-algorithm a DPLL-based procedure is used to SAT-check a formula $F$ starting from an empty T-box. If the formula is satisfiable it is passed to a specialised T-solver that checks whether it is T-consistent. If not, $\neg F$ is added to the SAT-solver's axioms and so forth.
 
 Both SAT and SMT approaches have their merits: SAT is a very general approach that requires minimal Human preprocessing while SMT can be much more efficient for specific domains.
 
-In this report we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to add to the axioms but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the axioms.
+In this report, we investigate the middle ground between the two approaches for the domain of 9x9 Sudokus. Namely, we do not use a T-solver to add to the axioms but check the clauses learnt by the SAT-solver on specific Sudokus for global validity on Sudokus. If a valid clause is found, it is added to the axioms.
 
-Based on previous results we hypothesize that in this way it is possible to train SAT-solvers to become more efficient on the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
+Based on previous results we hypothesize that in this way it is possible to train SAT-solvers to become more efficient in the current domain. We attempt to keep the procedure as general as possible so that it can be applied to any domain, not only Sudokus.
 
 The rest of this report is organised as follows: the results of previous work that led us to our hypothesis are summarised in section \ref{related work}; we present our methodology including the choice of dataset, encodings, SAT-solver and performance metrics in section \ref{methods}; in section \ref{algorithm} we propose an algorithm for SAT-theory learning including clause pruning, validity checking and validity pruning and various training protocols; section \ref{results} summarizes our findings; finally, in section \ref{conclusion} we present our conclusions and suggest avenues for further research.
 
 \section{Preliminaries}
 
-Given a set of propositional variables, we call the variables and their negations $literals$. A $clause$ $s$ is a set of literals interpreted as a disjunction. We call a set $S$ of clauses interpreted as a conjunction a $SAT-problem$ (in CNF). A function $\phi$ that maps some problem to a $SAT-problem$ is called an $encoding$. As far as possible we will treat a SAT-solver as a blackbox that tells us whether a SAT-problem in CNF is satisfiable and returns a satisfying assignment of the propositional variables. A SAT-problem is $proper$ if it admits exactly one satisfying assignment. Given a set of SAT-problems $D=\{S_1,...,S_n\}$ with $\cap_{i=1}^n S_i\neq \emptyset$ in CNF we refer to $D$ as the $domain$ of the problem, $A=\cap_{i=1}^n S_i$ as the $axioms$ of $D$ and to  $C_i=S_i\setminus \cap_{i=1}^n S_i$ as the $claims$ or $assertions$ of problem $i$.
+Given a set of propositional variables, we call the variables and their negations $literals$. A $clause$ $c$ is a set of literals interpreted as a disjunction. We call a set $S$ of clauses, interpreted as a conjunction of clauses, a $SAT-problem$ (in CNF). A function $\phi$ that maps some problem to a $SAT-problem$ is called an $encoding$. As far as possible we will treat a SAT-solver as a blackbox that tells us whether a SAT-problem in CNF is satisfiable and returns a satisfying assignment of the propositional variables. A SAT-problem is $proper$ if it admits exactly one satisfying assignment. Given a set of SAT-problems $D=\{S_1,...,S_n\}$ with $\cap_{i=1}^n S_i\neq \emptyset$ in CNF we refer to $D$ as the $domain$ of the problem, $A=\cap_{i=1}^n S_i$ as the $axioms$ of $D$ and to $C_i=S_i\setminus \cap_{i=1}^n S_i$ as the $claims$ or $assertions$ of problem $i$.
 For $c\in C$, if the SAT-solver returns ``unsatisfiable" for $S=A\cup c$ we call $\neg c$ $valid$ and a $theorem$. An axiom $a\in A$ is $redundant$ iff it is a theorem for any domain $D_{\setminus a}$ with axioms $A_{\setminus a}=A\setminus a$. For any theorem, we call its minimal valid subclauses the $kernels$ of the theorem.
 
-In this study $D_{min}$, $D_(eff)$, and $D_{ext}$ are the sets of proper SAT-problems obtained by appyling the corresponding encoding functions $\phi_{minimal}$, $\phi_{efficient}$ and $\phi_{extended}$ to a dataset of Sudokus to be specified below. The encodings furnish different sets of axioms $A_{min}$, $A_{eff}$ and $A_{ext}$. In addition, each individual SAT-problem is characterised by claims corresponding to the Sudoku's givens. We henceforth use Sudoku to refer to the SAT-problem corresponding to the Sudoku as well when the context is clear.
-
-
+In this study $D_{min}$, $D_(eff)$, and $D_{ext}$ are the sets of proper SAT-problems obtained by applying the corresponding encoding functions $\phi_{minimal}$, $\phi_{efficient}$ and $\phi_{extended}$ to a dataset of Sudokus to be specified below. The encodings furnish different sets of axioms $A_{min}$, $A_{eff}$ and $A_{ext}$. In addition, each individual SAT-problem is characterised by claims corresponding to the Sudoku's givens. We henceforth use Sudoku to refer to the SAT-problem corresponding to the Sudoku as well when the context is clear.
 
 \section{Related Work} \label{related work}
 
 Redundant axioms for Sudoku are mainly considered in constraint programming approaches. E.g. \citeA[11]{demoen2014redundant} find that: ``Redundant constraints are very often good for the performance of CP systems,
 and indeed, all solvers we checked perform much slower (about a factor 2000) with
-a minimal set of big constraints." \citeA{simonis2005sudoku} suggests several such redundant constraints and finds they boost performance of CP propagation schemes.
+a minimal set of big constraints." \citeA{simonis2005sudoku} suggests several such redundant constraints and finds they boost the performance of CP propagation schemes.
 
 As opposed to CP-systems SAT-solvers usually only have very limited propagation schemes such as unit propagation. However, the literature on Sudoku as a SAT-problem considers redundant axioms from a different perspective. A large part of it is devoted to optimizing CNF-encodings for Sudoku with respect to SAT-solver performance. \citeA{sudokusat} suggest and test two encodings: a $minimal$ and an $extended$ encoding. The extended encoding is nothing else than an encoding containing redundant axioms. They compare the encodings efficiency
 with respect to SAT-solvers' ability to solve Sudokus without search. They find among other things that substituting the minimal by the extended encoding increases the likelihood of solving a Sudoku without search using only unit propagation from 1\% to 69\%. In addition, \citeA{optimizedencoding} compared these encodings with respect to runtime over various Sudoku-sizes and found that the extended encoding scales much better with increased problem size.
 
 This apparent convergence in two strains of literature led us to hypothesize that redundant axioms might be beneficial to SAT-solver performance in spite of their limited inference tools. We thus wanted to find out which redundant axioms would be most helpful in strengthening inference and minimizing search. One way to go about this is to look for redundant axioms that the SAT-solver actually $learns$ during the search process.
 
-
-
 \section{Methodology} \label{methods}
 
 We decided to test our hypothesis experimentally. In order to do this, it was necessary to choose a suitable dataset, SAT-solver and a meaningful metric of performance as well as a CNF-encoding of Sudoku.
 
 \subsection{Dataset}
-The domain of all proper Sudokus has a cardinality of more than $6.67*10^21$. Therefore it is necessary to work with a subdomain. We used the collection of minimum (i.e. 17 givens) proper sudokus assembled by Gordon Royle \cite{sudokudataset}.  A minimal Sudoku is a Sudoku from which no given can be removed leaving it a proper Sudoku. The dataset consists of 49151 such sudokus. %and is provided by the University of Western Australia. Refer this \cite{sudokudataset}to access the dataset.
+The domain of all proper Sudokus has a cardinality of more than $6.67*10^21$. Therefore it is necessary to work with a subdomain. We used the collection of minimum (i.e. 17 givens) proper sudokus assembled by Gordon Royle \cite{sudokudataset}.  A minimal Sudoku is a Sudoku from which no given can be removed whilst remaining a proper Sudoku. The dataset consists of 49151 such sudokus. %and is provided by the University of Western Australia. Refer this \cite{sudokudataset}to access the dataset.
 
-We used 10000 sudokus to measure the performance of the SAT solver across different encodings and different base clauses. We used 5000 sudokus to train our SAT solver to learn new clauses which are valid for sudokus.
+From this dataset, we used 10000 sudokus to measure the performance of the SAT solver across different encodings and different base clauses. We used another 5000 sudokus to train our SAT solver to learn new clauses which are valid for sudokus.
 
 \subsection{Sudoku Encodings and DIMACS}
 
-We use the three different types of encoding functions specified in \cite{sudokusat} and \cite{optimizedencoding} for our experiments: the minimal encoding , the efficient encoding , and the extended encoding.
+We use the three different types of encoding functions specified in \cite{sudokusat} and \cite{optimizedencoding} for our experiments: the minimal, the efficient, and the extended encoding.
 
 %which are used to formulate Sudoku into a set of clauses. For more information refer \cite{sudokusat} and \cite{optimizedencoding}
 
 %A given sudoku can be formulated as a SAT formula which is satisfiable if and only if the puzzle has a solution.
 %Subsequently, the formula can be checked for satisfiability using SAT solver of our choice. A formula in CNF is represented by a set of clauses. The standard input format for most SAT solvers is CNF. Various encodings are known for encoding Sudoku as a CNF formula. We use three different types of encoding for our experiments which are: the minimal encoding , the efficient encoding , and the extended encoding which are used to formulate Sudoku into a set of clauses. For more information refer \cite{sudokusat} and \cite{optimizedencoding}
 
-The difference in the encodings is their axioms. Namely, $A_{min}\subset A_{eff}\subset A_{ext}$. Since the minimal encoding is a complete axiomatization of Sudoku, all of the additional axioms in the other encodings are redundant.
+Each encoding uses different axioms. Namely, $A_{min}\subset A_{eff}\subset A_{ext}$. Since the minimal encoding is a complete axiomatization of Sudoku, all of the additional axioms in the other encodings are redundant.
 
 %One advantage of avoiding redundancy in the axioms is that the size of the CNF-file produced can be significantly smaller. But according to our hypothesis we want to investigate the performance of the SAT-solvers when introducing interesting redundant clauses.
 
@@ -112,7 +108,7 @@ Block_{d} &= \bigwedge^{\sqrt{n}}_{r_{offs}=1}\bigwedge^{\sqrt{n}}_{c_{offs}=1}\
 & \vee \neg (r_{offs}\sqrt{n}+(r \space mod \sqrt{n}),c_{offs}*\sqrt{n}(c \space mod \sqrt{n}),v)
 \end{aligned}$
 
-In addition one more conjunction is needed to represent givens. Each given contains a pre-assigned number and thus the givens form a conjunction of unit clauses.
+In addition one more conjunction is needed to represent givens. The givens are then represented as a conjunction of unit clauses.
 %for example, if $[1,3] = 6$ in the input puzzle, then the cell $[1,3]$ is a given containing number $6$. %Let $V^{+}$ = \{$(r, c, v) \in V [r, c]\}$  be a given with pre-assigned value $v$} be a set of variables representing fixed cells and $k$ be the number of such fixed cells.
 Let $G_i=\{(r_1,c_1,v_1),...,(r_k,c_k,v_k)\}$ be the set of givens of Sudoku $S_i$. Then we have: \\
 
@@ -120,7 +116,7 @@ $\begin{aligned}
 Assigned &= \bigwedge^{k}_{i=1}(r,c,v),  where (r_j,c_j,v_j) \in G_i
 \end{aligned}$
 
-The differences in the three mentioned encodings then cosist in which of the definedness and uniqueness conditions they include \cite{optimizedencoding}: \\
+The differences in the three mentioned encodings then consist in which of the definedness and uniqueness conditions they include \cite{optimizedencoding}: \\
 
 $\begin{aligned}
 \phi_{minimal} &= Cell_{d} \wedge Row_{u} \wedge Col_{u} \wedge Block_{u} \wedge Assigned &\\
@@ -160,13 +156,13 @@ p cnf 6 3
 
 
 \subsection{The Minisat-Solver}
-The SAT-problems in DIMACS format are then passed on to a SAT-solver. For our experiment we use a SAT solver called Minisat. Minisat implements the DPLL algorithm and additionally implements conflict-driven learning and non-chronological backtracking. As Minisat has an upper limit on the number of learned clauses allowed it employs an activity heuristic when deciding which learned clauses to keep when it. The same heuristic is applied when doing backjumping. The heuristic essentially records which clauses and literals have been in recent conflicts and favors them over "stale" clauses and literals. For more information see (een2003extensible).
+The SAT-problems in DIMACS format are then passed on to a SAT-solver. For our experiment, we use a SAT solver called Minisat. Minisat implements the DPLL algorithm and additionally implements conflict-driven learning and non-chronological backtracking. As Minisat has an upper limit on the number of learned clauses it employs an activity heuristic when deciding which learned clauses to keep when it. The same heuristic is applied when doing backjumping. The heuristic essentially records which clauses and literals have been in recent conflicts and favours them over "stale" clauses and literals. For more information see (een2003extensible).
 
-For our purposes we needed to record the learned clause for a given conflict. To do this we needed to edit the Minisat code such that when encountering a conflict the deduced learned clause is printed out. By printing out the learned clause straight away we avoided the upper limit of Minisat learned clauses.
+For our purposes, we needed to record the learned clause for a given conflict. To do this we needed to edit the Minisat code such that when encountering a conflict the deduced learned clause is printed out. By printing out the learned clause straight away we avoided the upper limit of Minisat learned clauses.
 
 \subsection{Performance Metric}
 
-In additon we had Minisat output the number of $decisions$ per Sudoku. A decision consists in choosing a propositional variable and tentatively assigning it a truth value. The solver then checks whether the problem is satisfiable given the decision. Decisions occur when the SAT-solver exhausts its inference capabilities and resorts to search. Therefore the number of decisions is a good metric of the proportions of search vs inference the SAT-solver used in soving a SAT-problem. A low number of decisions indicates heavy use of inference, a high number indicates a lot of search.
+In addition, we had Minisat output the number of $decisions$ per Sudoku. A decision consists in choosing a propositional variable and tentatively assigning it a truth value. The solver then checks whether the problem is satisfiable given the decision. Decisions occur when the SAT-solver exhausts its inference capabilities and resorts to search. Therefore the number of decisions is a good metric of the proportions of search vs inference the SAT-solver used in solving a SAT-problem. A low number of decisions indicates heavy use of inference, a high number indicates a lot of search.
 Given our hypothesis that redundant axioms can help inference, we would expect the number of decisions to decrease when more redundant axioms are added.
 
 %Overview:
@@ -245,18 +241,17 @@ Given our hypothesis that redundant axioms can help inference, we would expect t
 
 %print(globally_valid_clauses)
 \section{The learning Algorithm} \label{algorithm}
-The learning algorithm collects all learnt clauses reported by the SAT-solver, prunes the learnt clauses by removing clauses which are definitely not valid and then checks the validity of the remaining clauses. If a clause is found to be valid we add it to the encoding currently being run in order to avoid the the SAT-solver learning the same clause twice.
+The learning algorithm collects all learnt clauses reported by the SAT-solver, prunes the learnt clauses by removing clauses which are definitely not valid and then checks the validity of the remaining clauses. If a clause is found to be valid we add it to the encoding currently being used in order to avoid the SAT-solver learning the same clause twice.
 
 To test for validity of a clause we need check if the negation of that clause is not satisfiable with the encoding. If the negation is not satisfiable then the clause is valid.
+
 \subsection{Clause Pruning} \label{clause pruning}
 Since the number of learnt clauses can be very high for a single SAT-problem and we need to run a SAT-solver on each learnt clause it is important to remove clauses that we either know to be valid or not valid.
 
-To detect valid clauses we check if the learnt clause is a superset of a clause in the extended encoding, i.e. clause in the encoding implies the learnt clause and therefore the learnt clause is valid. To detect a non-valid clause we first check if it is a unit clause, as they are never valid in sudokus. Secondly we check if the clause is not satisfied in any of our previous solutions, i.e. we check if we have a known counter-example to the clause. This step prunes the most number of clauses, is rather fast and gets better with runtime. Lastly, we check if the clause has length 9 or less and contains exactly one negated variable as these clauses are never valid in sudokus (proof omitted). The effectiveness of our pruning went from being able to prune away about 60% of the learnt clauses to about 90% over the runtime.
+To detect valid clauses we check if the learnt clause is a superset of a clause in the extended encoding, i.e. clause in the encoding implies the learnt clause and therefore the learnt clause is valid. To detect a non-valid clause we first check if it is a unit clause, as they are never valid in Sudoku. Secondly we check if the clause is not satisfied in any of our previous solutions, i.e. we check if we have a known counter-example to the clause. This step prunes the most number of clauses, is rather fast and gets better with runtime. Lastly, we check if the clause has length 9 or less and contains exactly one negated variable as these clauses are never valid in sudokus (proof omitted). The effectiveness of our pruning went from being able to prune away about 60% of the learnt clauses to about 90% over the runtime.
 
 \subsection{Validity Pruning} \label{val pruning}
-As the learnt clause is not necessarily the minimally valid clause w.r.t. sudokus and we don't want valid clauses which contain redundant variables to our encoding, we need to find the minimally valid clause. For the cases which we know the valid clause to be a superset of a clause in some encoding, we know that the minimal valid clause is exactly the clause in the encoding. For the cases in which the learnt clause is not a superset of any encoding we need to compute the minimally valid clause. Without going into too much detail about the algorithm which computes the minimally valid clause we simply state that it has a worst case factorial runtime with the number of variables in a clause as we attempt to construct a smaller clause with different combinations of variables, each of which needs to be checked for validity.
-\subsection{Training} \label{training}
-We ran our learning algorithm on 5000 sudokus which were not used when testing our encoding extended with learnt validities. After each 100 sudokus we gathered the learnt clauses and ran our learning algorithm on them and added the pruned validities to the current encoding.
+As the learnt clause is not necessarily the kernel and we don't want valid clauses which contain redundant variables in our encoding, we need to find the kernel. For the cases which we know the valid clause to be a superset of a clause in some encoding, we know that the kernel is exactly the clause in the encoding. For the cases in which the learnt clause is not a superset of any encoding we need to compute the minimally valid clause. Without going into too much detail about the algorithm which computes the kernel we simply state that it has a worst case factorial runtime with the number of variables in a clause as we attempt to construct a smaller clause with different combinations of variables, each of which needs to be checked for validity.
 
 \section{Results} \label{results}
 
@@ -304,7 +299,7 @@ Valid clauses learnt during training with minimal encoding
 \[(9, 3, 8 ) \lor (2, 3, 8 ) \lor (8, 3, 8 ) \lor \neg (5, 1, 8 ) \lor (1, 3, 8 ) \lor (3, 3, 8 ) \lor \neg (7, 3, 9 ) \]
 \[(9, 7, 4) \lor (8, 9, 4) \lor \neg (9, 8, 8) \lor \neg (9, 9, 1) \lor (8, 7, 4) \lor (8, 8, 4) \lor \neg (7, 4, 4)\] \\\\
 
-The learnt clauses are of course very specific and to be able to make some sense of them, some generalization is needed. The first clause simply states that if some number $x$ and $y$ is in column $j$ and the number $z$ is missing from column $j$ then $z$ is where $x$ and $y$ are not. We observed a few of number of the clauses.
+The learnt clauses are of course very specific and to be able to make some sense of them, some generalization is needed. The first clause simply states that if some numbers $x$ and $y$ are in column $j$ and the number $z$ is missing from column $j$ then $z$ is where $x$ and $y$ are not. We observed a few of number of the clauses.
 
 The second clause can then be interpreted as stating that when you a number $x$ in block $k$ and s.t. $x$ is not in column $j$ but column $j$ is a part of block $k$, then $x$ is somewhere in column $j$, excluding the cells that are in block $k$. It further states that if you have some other number $y$ in column $j$ - also excluding the cells that are in block $k$ - then $x$ is in some other place than $y$. In short this is stating that when a number is placed in some block then a column which is a part of the block, that number in that column needs to be from a different block as well as the fact that if a cell is filled in that column, the number cannot be in that cell.
 
