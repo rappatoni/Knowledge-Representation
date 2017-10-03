@@ -239,7 +239,7 @@ To test for validity of a clause we need check if the negation of that clause is
 \subsection{Clause Pruning} \label{clause pruning}
 Since the number of learnt clauses can be very high for a single SAT-problem and we need to run a SAT-solver on each learnt clause it is important to remove clauses that we either know to be valid or not valid.
 
-To detect valid clauses we check if the learnt clause is a superset of a clause in the extended encoding, i.e. clause in the encoding implies the learnt clause and therefore the learnt clause is valid. To detect a non-valid clause we first check if it is a unit clause, as they are never valid in sudokus. Secondly we check if the clause is not satisfied in any of our previous solutions, i.e. we check if we have a known counter-example to the clause. This step prunes the most number of clauses, is rather fast and gets better with runtime. Lastly, we check if the clause has length 9 or less and contains exactly one negated variable as these clauses are never valid in sudokus (proof omitted).
+To detect valid clauses we check if the learnt clause is a superset of a clause in the extended encoding, i.e. clause in the encoding implies the learnt clause and therefore the learnt clause is valid. To detect a non-valid clause we first check if it is a unit clause, as they are never valid in sudokus. Secondly we check if the clause is not satisfied in any of our previous solutions, i.e. we check if we have a known counter-example to the clause. This step prunes the most number of clauses, is rather fast and gets better with runtime. Lastly, we check if the clause has length 9 or less and contains exactly one negated variable as these clauses are never valid in sudokus (proof omitted). The effectiveness of our pruning went from being able to prune away about 60% of the learnt clauses to about 90% over the runtime.
 
 \subsection{Validity Pruning} \label{val pruning}
 As the learnt clause is not necessarily the minimally valid clause w.r.t. sudokus and we don't want valid clauses which contain redundant variables to our encoding, we need to find the minimally valid clause. For the cases which we know the valid clause to be a superset of a clause in some encoding, we know that the minimal valid clause is exactly the clause in the encoding. For the cases in which the learnt clause is not a superset of any encoding we need to compute the minimally valid clause. Without going into too much detail about the algorithm which computes the minimally valid clause we simply state that it has a worst case factorial runtime with the number of variables in a clause as we attempt to construct a smaller clause with different combinations of variables, each of which needs to be checked for validity.
@@ -251,7 +251,7 @@ We ran our learning algorithm on 5000 sudokus which were not used when testing o
 Below are the results of the experiments conducted with just using the base clauses and using the learnt clauses obtained during the learning phase using the dataset mentioned in section(4.1)
 
 \begin{center}
-\captionof{table}{Number of Decisions made by SAT solver for dataset size = 10000} \label{tab:title} 
+\captionof{table}{Number of Decisions made by SAT solver for dataset size = 10000} \label{tab:title}
 \begin{tabular}{ | l | l | l |}
     \hline
      & Without using learnt clause & Using learnt clause \\ \hline
@@ -259,7 +259,7 @@ Below are the results of the experiments conducted with just using the base clau
     Efficient & 4267712 & 4202448 \\ \hline
     Extended & 42134 & 42151 \\
     \hline
-\end{tabular} 
+\end{tabular}
 \end{center}
 
 The results clearly indicate that the redundant axioms from the extended encoding yield an enormous decrease in the number of decisions: using the extended encoding the SAT-solver needs only about 1\% of the decisions it uses with the minimal or efficient encoding. This clearly shows that if the SAT-solver can learn axioms from the extended encoding, it should be possible to achieve a substantial decrease in the number of decisions.
@@ -274,7 +274,7 @@ A decrease in decisions to the base case was not achieved. It is clearly visible
 The below table gives the results concerning the new clauses which are learnt during the training phase. We have categorized the results based on the type of the clause that is learnt which corresponds to the types of clauses explained in section(4.2)
 
 \begin{center}
-\captionof{table}{Number of clauses learnt in each category for dataset size = 5000} \label{tab:title} 
+\captionof{table}{Number of clauses learnt in each category for dataset size = 5000} \label{tab:title}
 \begin{tabular}{ | l | l | l | l | l | l | l | l | l | l |}
 	\hline
      & $block_{d}$ & $row_{d}$ & $column_{d}$ & $cell_{d}$ & $block_{u}$ & $row_{u}$ & $column_{u}$ & $cell_{u}$ & new \\ \hline
@@ -286,17 +286,20 @@ The below table gives the results concerning the new clauses which are learnt du
 \end{center}
 \bigskip
 
-From the above results, it is confirmed that the extended encoding does not learn any new clauses. The most interesting clauses that are learnt are that corresponds to the new column. These clauses do not fall into any of the previous category. Below are some new clauses learnt during the training in $(row, column, number)$ representation:
+From the above results, it is confirmed that the extended encoding does not learn any new clauses. The most interesting clauses that are learnt are that corresponds to the new column. These clauses do not fall into any of the previous category. Below are some new valid clauses learnt during the training in $(row, column, number)$ representation:
 
 \begin{center}
-Clauses learnt during training with minimal encoding 
+Valid clauses learnt during training with minimal encoding
 \end{center}
-\[(9, 3, 8 ) \bigvee (2, 3, 8 ) \bigvee (8, 3, 8 ) \bigvee \neg (5, 1, 8 ) \bigvee (1, 3, 8 ) \bigvee (3, 3, 8 ) \bigvee \neg (7, 3, 9 ) \]
-\[(9, 3, 8) \bigvee (2, 3, 8) \bigvee (4, 3, 8) \bigvee (8, 3, 8) \bigvee \neg (6, 3, 2) \bigvee (1, 3, 8) \bigvee (3, 3, 8) \bigvee (5, 3, 8) \bigvee \neg (7, 3, 9)\]
-\[(9, 7, 4) \bigvee (8, 9, 4) \bigvee \neg (9, 8, 8) \bigvee \neg (9, 9, 1) \bigvee (8, 7, 4) \bigvee (8, 8, 4) \bigvee \neg (7, 4, 4)\] \\\\
+\[(9, 3, 8) \lor (2, 3, 8) \lor (4, 3, 8) \lor (8, 3, 8) \lor \neg (6, 3, 2) \lor (1, 3, 8) \lor (3, 3, 8) \lor (5, 3, 8) \lor \neg (7, 3, 9)\]
+\[(9, 3, 8 ) \lor (2, 3, 8 ) \lor (8, 3, 8 ) \lor \neg (5, 1, 8 ) \lor (1, 3, 8 ) \lor (3, 3, 8 ) \lor \neg (7, 3, 9 ) \]
+\[(9, 7, 4) \lor (8, 9, 4) \lor \neg (9, 8, 8) \lor \neg (9, 9, 1) \lor (8, 7, 4) \lor (8, 8, 4) \lor \neg (7, 4, 4)\] \\\\
 
+The learnt clauses are of course very specific and to be able to make some sense of them, some generalization is needed. The first clause simply states that if some number $x$ and $y$ is in column $j$ and the number $z$ is missing from column $j$ then $z$ is where $x$ and $y$ are not. We observed a few of number of the clauses.
 
----- Haukur's insights ----
+The second clause can then be interpreted as stating that when you a number $x$ in block $k$ and s.t. $x$ is not in column $j$ but column $j$ is a part of block $k$, then $x$ is somewhere in column $j$, excluding the cells that are in block $k$. It further states that if you have some other number $y$ in column $j$ - also excluding the cells that are in block $k$ - then $x$ is in some other place than $y$. In short this is stating that when a number is placed in some block then a column which is a part of the block, that number in that column needs to be from a different block as well as the fact that if a cell is filled in that column, the number cannot be in that cell.
+
+The third clause is similar to the second clause but rather states that when a number is placed in a column which is a part of some block, the number in that block needs to be from a different column. We also found clauses which were like the second clause but exchanged row for column.
 
 \section{Conclusion} \label{conclusion}
 
