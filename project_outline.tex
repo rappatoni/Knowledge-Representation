@@ -151,7 +151,7 @@ The SAT-problems in DIMACS format are then passed on to a SAT-solver. For our ex
 
 For our purposes we needed to record the learned clause for a given conflict. To do this we needed to edit the Minisat code such that when encountering a conflict the deduced learned clause is printed out. By printing out the learned clause straight away we avoided the upper limit of Minisat learned clauses.
 
-\subsection{Measures of Performance}
+\subsection{Performance Metric}
 
 In additon we had Minisat output the number of $decisions$ per Sudoku. A decision consists in choosing a propositional variable and tentatively assigning it a truth value. The solver then checks whether the problem is satisfiable given the decision. Decisions occur when the SAT-solver exhausts its inference capabilities and resorts to search. Therefore the number of decisions is a good metric of the proportions of search vs inference the SAT-solver used in soving a SAT-problem. A low number of decisions indicates heavy use of inference, a high number indicates a lot of search.
 Given our hypothesis that redundant axioms can help inference, we would expect the number of decisions to decrease when more redundant axioms are added.
@@ -234,7 +234,7 @@ Given our hypothesis that redundant axioms can help inference, we would expect t
 \section{The learning Algorithm} \label{algorithm}
 The learning algorithm collects all learnt clauses reported by the SAT-solver, prunes the learnt clauses by removing clauses which are definitely not valid and then checks the validity of the remaining clauses. If a clause is found to be valid we add it to the encoding currently being run in order to avoid the the SAT-solver learning the same clause twice.
 
-To test for validity of a clause we need check if the negation of that clause is not satisfiable with the encoding. If the negation is not satisfiable then clause is valid.
+To test for validity of a clause we need check if the negation of that clause is not satisfiable with the encoding. If the negation is not satisfiable then the clause is valid.
 \subsection{Clause Pruning} \label{clause pruning}
 Since the number of learnt clauses can be very high for a single SAT-problem and we need to run a SAT-solver on each learnt clause it is important to remove clauses that we either know to be valid or not valid.
 
@@ -244,7 +244,17 @@ To detect valid clauses we check if the learnt clause is a superset of a clause 
 As the learnt clause is not necessarily the minimally valid clause w.r.t. sudokus and we don't want valid clauses which contain redundant variables to our encoding, we need to find the minimally valid clause. For the cases which we know the valid clause to be a superset of a clause in some encoding, we know that the minimal valid clause is exactly the clause in the encoding. For the cases in which the learnt clause is not a superset of any encoding we need to compute the minimally valid clause. Without going into too much detail about the algorithm which computes the minimally valid clause we simply state that it has a worst case factorial runtime with the number of variables in a clause as we attempt to construct a smaller clause with different combinations of variables, each of which needs to be checked for validity.
 \subsection{Training} \label{training}
 We ran our learning algorithm on 5000 sudokus which were not used when testing our encoding extended with learnt validities. After each 100 sudokus we gathered the learnt clauses and ran our learning algorithm on them and added the pruned validities to the current encoding.
+
+
 \section{Results} \label{results}
+
+To establish a baseline for the number of decisions we let the untrained SAT-solver solve 10000 Sudokus from the datasets. The results are displayed in table 1. %Please add table with results of untrained runs about here.
+
+The results clearly indicate that the redundant axioms from the extended encoding yield an enormous decrease in the number of decisions: using the extended encoding the SAT-solver needs only about 1\% of the decisions it uses with the minimal or efficient encoding. This clearly shows that if the SAT-solver can learn axioms from the extended encoding, it should be possible to achieve a substantial decrease in the number of decisions.
+
+
+
+
 \section{Conclusion} \label{conclusion}
 
 
