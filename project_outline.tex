@@ -252,6 +252,10 @@ To establish a baseline for the number of decisions we let the untrained SAT-sol
 
 The results clearly indicate that the redundant axioms from the extended encoding yield an enormous decrease in the number of decisions: using the extended encoding the SAT-solver needs only about 1\% of the decisions it uses with the minimal or efficient encoding. This clearly shows that if the SAT-solver can learn axioms from the extended encoding, it should be possible to achieve a substantial decrease in the number of decisions.
 
+However, in this regard we obtained a negative result: table 2 indicates the number of decisions as well as the classes of learned validities for all three encodings. %Please enter table 2 around here.
+
+A decrease in decisions to the base case was not achieved. It is clearly visible that the SAT-solver was only able to learn clauses belonging to the minimal and efficient encodings. We hypothesize that the reason for this is that the length of axioms of type $Row_d$, $Col_d$, and $Block_d$ which characterise the extended encoding is much longer than those from the other encodings: $Row_d$, $Col_d$, and $Block_d$ axioms are nine-place disjunctions whereas $Cell_u$, $Row_u$, $Col_u$ and $Block_u$ are only two-place disjunctions. This makes it much harder for the SAT-solver to find extended encoding axioms.
+
 
 
 
