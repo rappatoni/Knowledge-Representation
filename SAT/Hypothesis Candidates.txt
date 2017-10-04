@@ -1,0 +1,124 @@
+List of possible hypotheses:
+
+Search vs Inference:
+
+	"Sudokus involving search are more/less difficult for humans than a computer." no
+
+	"Sudokus involving search are more/less difficult for SAT solvers of class X  than SAT solvers of class Y." no
+
+Snake/Killer Sudoku:
+	
+	"Snake/Killer Sudoku, i.e. varying the shape of the "boxes" negatively affects human performance solving Sudokus
+	but not computer performance." Maybe
+
+Encoding:
+	
+	"The more powerful/expressive the encoding, the less efficient for SAT solvers." Difficult
+
+Number of givens:
+
+	"Number of steps increases with less givens for well-formed Sudokus but decreases for non-well-formed Sudokus" Obvious
+
+Nested Sudokus:
+
+	"SAT solvers are more efficient at solving nested Sudokus than normal Sudokus." Obvious
+
+Symmetry groups/Equivalence Classes
+
+(Sudokus are essentially the same (equivalent) if they can be derived from one another through certain Sudoku preserving operations
+https://en.wikipedia.org/wiki/Mathematics_of_Sudoku#Enumerating_essentially_different_Sudoku_solutions
+http://www.math.cornell.edu/~mec/Summer2009/Mahmood/Symmetry.html)
+
+	"Sudokus belonging to one equivalence class have different difficulties for SAT-solvers." Most probably false
+	"Is there a way to reliably identify the simplest Sudoku in one equivalence class?"
+	"Transforming a Sudoku before solving can safe computational expense."
+	"It pays off computationally to transform a Sudoku to the simplest in its class before solving it."
+
+Redundant constraints
+
+Definition: A redundant constraint is a constraint that is valid given the other constraints.
+
+During non-chronological backtracking learned clauses are added to the constraints. If a learned clause is valid, it could have been
+provided as a redundant constraint. Then the SAT-solver would not have to explore the tree that leads to the learned clause being added.
+
+Checking validity of a clause is the VAL problem which is Co-NP. In other words, checking whether the negation is satisfiable will answer
+the VAL problem. If the negation of a clause is not satisfiable, the clause must be valid.
+
+https://lirias.kuleuven.be/bitstream/123456789/353637/1/sudokutplp.pdf investigate to remove constraints from Sudokus (individually
+not generally if I understand correctly). They find that: "Redundant constraints are very often good for the performance of CP systems,
+and indeed, all solvers we checked perform much slower (about a factor 2000) with a minimal set of big constraints." In addition,
+http://4c.ucc.ie/~hsimonis/sudoku.pdf finds that additional redundant constraints positively affect the efficiency of CP solvers.
+The question is, is this also the case for SAT solvers? There is some evidence that points in this direction: 
+http://anytime.cs.umass.edu/aimath06/proceedings/P34.pdf finds that an extended encoding (thus containing redundant clauses) leads to
+SAT solvers being able to more reliably solve Sudokus without search (using merely inference). http://www.cs.cmu.edu/~hjain/papers/sudoku-as-SAT.pdf
+finds with respect to that extended encoding: " It is easy to see that the extended encoding which adds redundant clauses to the minimal encoding 
+shows the best performance among the three encodings." However, they also find that "The runtime of a SAT solver is highly related to the input formulasize,
+especially, when the input formula size is in gigabytes." So there is likely a trade-off between better inference due to redundant
+clauses and larger input size. Thus a hypothesis to be investigated could be:
+
+	"For low numbers of variables (e.g. 3x3 Sudokus) SAT-performance can be increased by adding redundant constraints. 
+	For high numbers of variables (e.g. 81x81 Sudoku) SAT-performance suffers from adding redundant constraints."
+
+A related hypothesis would be:
+
+	"The redundant constraints that lead to the greatest efficiency improvement are the ones that are most often added as clauses during 
+	non-chronological backtracking."
+
+Finally:
+
+	"It is possible to train a SAT solver to perform faster on (a class of Sudokus) by letting it add the most commonly learned valid clauses
+	to the constraints of the (class of) Sudokus."
+
+E.g.: a modified diplomatic puzzle
+
+Let's say the foreign policy of the country has the following axioms:
+
+P'+Q'
+Q'+R'
+R+P
+
+In addition the king wants
+
+Q+R
+
+Let's say we split by trying Q. Then the axioms lead to a contradiction. That means, Q' is actually an axiom itself. No matter what the king
+or the crown prince or anybody else wants, that will always hold. So it is redundant to check this every time when writing invitations for a 
+diplomatic dinner. So it would be good if our algorithm could learn this.
+
+
+http://4c.ucc.ie/~hsimonis/sudoku.pdf contains some redundant constraints. In addition I have thought of the following:
+
+	For the diagonals, at least 3 cells are different.
+	There can be at most 3 diagonal neighbours
+	No two neighbouring boxes (non-diagonally) can be the same
+	...
+
+I also think there might be very interesting follow up investigations which we should discuss such as:
+	
+	What's the effect of redundant constrants on SAT solvers with different inference techniques (unit clause, failed literal...)?
+	How do redundant constraints and different encodings affect each other (the "extended encoding" in effect puts in redundant constraints e.g.)
+	Can we make a learning Sudoku SAT solver that adds valid clauses (i.e. redundant constraints) that are frequently added during backtracking
+	to the input to increase performance on other sudokus?
+
+As a data set I would suggest the 50000 minimal sudokus found here: http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php
+Another dataset that might be useful is this website http://www.menneske.no/sudoku/
+This is also what's used in most of the other papers.
+
+Pseudocode for a valid clause learning algorithm:
+
+Train Sat Solver
+
+Input=List of Constraints %(e.g. http://anytime.cs.umass.edu/aimath06/proceedings/P34.pdf minimal encoding)
+Training Set = list of lists of givens %(eg http://staffhome.ecm.uwa.edu.au/~00013890/sudokumin.php)
+Learned Clauses=[]
+For i in training set:
+	Inputi=Input+i
+	Sat-Solver(Inputi)
+	Learned Clauses+= rec(Sat-Solver) %Imaginary function that records clauses learned by SAT-Solver
+For j in learned clauses:
+	Val=VAL-check(j) %Validity check of j. Note that this is in itself an inverse SAT-problem (however typical complexity may be low). Given that there is a huge number of learned clauses, cleaver pruning will be essential.
+	if Val=true and #j(learned clauses)/len(learned clauses)>=x: %x being some rate to be decided on.
+		Input=Input+j
+
+
+	 
