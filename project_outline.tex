@@ -9,14 +9,9 @@ TASK 1: find which classes are inconsistent, find ways to resolve the inconsiste
 
 TASK 2: find if there are places where the pizza.owl ontology contains redundant statements. If you find any, report them and explain why they are redundant. Notice in the pane for object-property-hierarchy that object-properties such as isIngredientOf can have characteristics (such as being transitive) (you can also use window -> views -> object property ). Such characteristics are often the source of redundant statements. But of course there are other sources, such as redundant number restrictions, redundant subclass statements, redundant class-intersections, and many others.
 
-CajunSpiceTopping:
--Redundant class intersection:
-  PizzaTopping and some spicyness.
--Problem not in definition of the Topping but rather in parents
--Fix:
-
 VegitarianPizza, VegitarianPizzaEquivalent1 and VegitarianPizzaEquivalent2:
 -All define the same pizzas in different ways
+
 SpicyPizzaEquivalent, and SpicyPizza:
 -All define the same pizzas in different ways
 
