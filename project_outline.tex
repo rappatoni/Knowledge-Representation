@@ -40,7 +40,10 @@ TASK 3: Extend the ontology with some obvious redundant statements, and save the
 Reduntant statements added:
 
 - Adding food to the definition of CheeseyPizza, InterestingPizza and MeatyPizza which doesn’t change anything because it is the superclass
-- Adding not VegetarianPizza to the definition of MeatyPizza 
+- Adding not VegetarianPizza to the definition of MeatyPizza
+- Add hasTopping some PepperTopping to subclass of AmericanHot - Reduntant this subclass is already implied by AmericanHot being a subclass of hasTopping some HotGreenPepperTopping and hasTopping some JalapenoPepperTopping
+- Add MushroomTopping and OliveTopping are subclass of VegetarianTopping - this is redundant because MushroomTopping and OliveTopping are subclass of VegetableTopping which is in turn VegetarianTopping
+ 
 
 Submit the following files
 a text-file (one page will do) explaining

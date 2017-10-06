@@ -12,9 +12,7 @@
     <Prefix name="xml" IRI="http://www.w3.org/XML/1998/namespace"/>
     <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
     <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
-    <Prefix name="owl11" IRI="http://www.w3.org/2006/12/owl11#"/>
     <Prefix name="pizza" IRI="http://www.co-ode.org/ontologies/pizza/pizza.owl#"/>
-    <Prefix name="owl11xml" IRI="http://www.w3.org/2006/12/owl11-xml#"/>
     <Annotation>
         <AnnotationProperty abbreviatedIRI="owl:versionInfo"/>
         <Literal xml:lang="en" datatypeIRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral">v.1.5. Removed protege.owl import and references. Made ontology URI date-independent</Literal>
@@ -161,7 +159,13 @@
         <ObjectProperty IRI="#hasTopping"/>
     </Declaration>
     <Declaration>
+        <NamedIndividual IRI="#Italy"/>
+    </Declaration>
+    <Declaration>
         <Class abbreviatedIRI="owl:Thing"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#England"/>
     </Declaration>
     <Declaration>
         <Class IRI="#Spiciness"/>
@@ -230,6 +234,12 @@
         <Class IRI="#SauceTopping"/>
     </Declaration>
     <Declaration>
+        <NamedIndividual IRI="#Germany"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#America"/>
+    </Declaration>
+    <Declaration>
         <ObjectProperty IRI="#hasSpiciness"/>
     </Declaration>
     <Declaration>
@@ -276,6 +286,9 @@
     </Declaration>
     <Declaration>
         <Class IRI="#SlicedTomatoTopping"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#France"/>
     </Declaration>
     <Declaration>
         <Class IRI="#ThinAndCrispyPizza"/>
@@ -351,21 +364,6 @@
     </Declaration>
     <Declaration>
         <Class IRI="#HotSpicedBeefTopping"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="#England"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="#Germany"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="#America"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="#France"/>
-    </Declaration>
-    <Declaration>
-        <NamedIndividual IRI="#Italy"/>
     </Declaration>
     <EquivalentClasses>
         <Class IRI="#CheeseyPizza"/>
@@ -620,6 +618,13 @@
         <ObjectSomeValuesFrom>
             <ObjectProperty IRI="#hasTopping"/>
             <Class IRI="#PeperoniSausageTopping"/>
+        </ObjectSomeValuesFrom>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#AmericanHot"/>
+        <ObjectSomeValuesFrom>
+            <ObjectProperty IRI="#hasTopping"/>
+            <Class IRI="#PepperTopping"/>
         </ObjectSomeValuesFrom>
     </SubClassOf>
     <SubClassOf>
@@ -1411,6 +1416,10 @@
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#MushroomTopping"/>
+        <Class IRI="#VegetarianTopping"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#MushroomTopping"/>
         <ObjectSomeValuesFrom>
             <ObjectProperty IRI="#hasSpiciness"/>
             <Class IRI="#Mild"/>
@@ -1493,6 +1502,10 @@
     <SubClassOf>
         <Class IRI="#OliveTopping"/>
         <Class IRI="#VegetableTopping"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#OliveTopping"/>
+        <Class IRI="#VegetarianTopping"/>
     </SubClassOf>
     <SubClassOf>
         <Class IRI="#OliveTopping"/>
