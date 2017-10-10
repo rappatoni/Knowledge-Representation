@@ -26,11 +26,13 @@
 \item Redundant statements found:
 
 \begin{itemize}
-\item $VegitarianPizza$, $VegitarianPizzaEquivalent1$ and $VegitarianPizzaEquivalent2$ \\
-All define the same pizzas in different ways
+\item $VegitarianPizzaEquivalent1$ and $VegitarianPizzaEquivalent2$ \\
+All define the same pizzas in different ways.
+Fix: Remove $VegitarianPizzaEquivalent2$
 
 \item $SpicyPizzaEquivalent$ and $SpicyPizza$ \\
-All define the same pizzas in different ways
+All define the same pizzas in different ways.
+Fix: Remove $SpicyPizzaEquivalent$
 
 \item $Caprina$ has $SundriedTomatoTopping$ which is a $TomatoTopping$ and $TomatoTopping$ as well. \\
 Fix: Remove $TomatoTopping$ requirement.
@@ -39,12 +41,12 @@ Fix: Remove $TomatoTopping$ requirement.
 Fix: Remove $TomatoTopping$ requirement.
 
 \item $Pizza$ has $Food$ and $hasBase$ as $PizzaBase$ which is a subset of $Food$ \\
-Fix: Remove $Food$ from definition of $Pizza$
+Fix: Remove $Food$ from definition of $Pizza$.
 
 \item $CheesyPizza$, $InterestingPizza$, $SpicyPizza$ and $Meaty Pizza$ have $Pizza$ in their definition but as $hasTopping$ has domain of $Pizza$, hence $Pizza$ is redundant. \\ 
 Fix: Remove $Pizza$ from the definitions.
 
-\item  $Hot$, $Medium$ and $Mild$ have $SubClass Of(Anonymous Ancestor)$ as "$Hot$ $or$ $Medium$ $or$ $Mild$" and also they have $Spiciness$ as subclass of where both means the same. \\
+\item  $Hot$, $Medium$ and $Mild$ are subclasses of the anonymous ancestor "$Hot$ $or$ $Medium$ $or$ $Mild$" and also subclasses of $Spiciness$ but these two are equivalent. \\
 Fix: Remove "$Hot$ $or$ $Medium$ $or$ $Mild$" from $SubClass Of(Anonymous Ancestor)$ 
 
 \end{itemize}
@@ -55,16 +57,16 @@ Following are the reasons for the inconsistency and fixes we implemented to make
 
 \begin{itemize}
 \item Inconsistency: $IceCream$ had the property $hasTopping$ which had domain $Pizza$, which is disjoin with $IceCream$. \\
-Fix: Removed $hasTopping$
+Fix: Removed $hasTopping$ from the definition of $IceCream$.
 \item Inconsistency: $CheesyVegetableTopping$ has top disjoint parents. \\
-Fix: Deleted as the class is inconsistent and cannot exist.
+Fix: Deleted  $CheesyVegetableTopping$ as the class is inconsistent and cannot exist.
 \end{itemize}
 
 After the above fixes the pizza ontology becomes consistent.
 
 \item Extending the ontology with redundant statements
 
-Below are some obvious redundant statement added to the definition of classes and verified by generating the inferred subsumptions
+Below are some obvious redundant statements added to the definition of classes and verified by generating the inferred subsumptions
 \begin{itemize}
 \item Add $Food$ to the definition of $CheeseyPizza$, $InterestingPizza$ and $MeatyPizza$ which doesn’t change anything because it is the superclass/parent of $Pizza$ which is already in the definition.
 
