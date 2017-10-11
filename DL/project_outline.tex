@@ -1,0 +1,58 @@
+The DL project
+Finding inconsistencies and redundancies in an ontology.
+Install Protege from http://protege.stanford.edu/ (WebProtege is too limited for our purposes). Activate a reasoner plugin as part of Protege (FACT++ or Pellet will do), download the pizza.owl ontology from here (https://www.dropbox.com/s/y6quwzokhav3ud0/pizza.owl?dl=0) and open it in Protege. A useful way to navigate around your ontology is the "export -> OWLDoc" option.
+TASK 0: inspect the class hierarchy windows -> views -> class views -> class hierarchy compare asserted vs. inferred (before and after you've run a reasoner)
+TASK 1: find which classes are inconsistent, find ways to resolve the inconsistency, implement them in the Protege editor, and save the result as your own consistent-pizza.owl file.
+
+"IceCream" had the property "hasTopping" which had domain "Pizza", which is disjoin with "IceCream". Removed "hasTopping"
+"CheesyVegetableTopping" has top disjoint parents. Deleted as the concept is inconsistent.
+
+TASK 2: find if there are places where the pizza.owl ontology contains redundant statements. If you find any, report them and explain why they are redundant. Notice in the pane for object-property-hierarchy that object-properties such as isIngredientOf can have characteristics (such as being transitive) (you can also use window -> views -> object property ). Such characteristics are often the source of redundant statements. But of course there are other sources, such as redundant number restrictions, redundant subclass statements, redundant class-intersections, and many others.
+
+VegitarianPizza, VegitarianPizzaEquivalent1 and VegitarianPizzaEquivalent2:
+-All define the same pizzas in different ways
+
+SpicyPizzaEquivalent, and SpicyPizza:
+-All define the same pizzas in different ways
+
+Caprina:
+-Has SundriedTomatoTopping which is a TomatoTopping and TomatoTopping as well.
+-Fix:
+  Remove TomatoTopping requirment.
+
+Giardiniera:
+-Has SlicedTomatoTopping which is a TomatoTopping and TomatoTopping as well.
+-Fix:
+  Remove TomatoTopping requirment.
+
+Pizza:
+-has Food and hasBase PizzaBase which is a subset of Food
+-Fix:
+  Remove Food from defintion of Pizza
+
+CheesyPizza, InterestingPizza, SpicyPizza, Meaty Pizza:
+-All have Pizza in their definition but as "hasTopping" has domain of Pizza, Pizza is redundant
+-Fix:
+  Remove Pizza from the definitions.
+
+TASK 3: Extend the ontology with some obvious redundant statements, and save the result as redundant-pizza.owl. You may want to derive all inferred subsumption statements to check that your added statements were indeed only redundant: use file -> export inferred statements..., and choose a syntax you can read, such as Manchester syntax, or OWL functional syntax, or even the LaTeX syntax (and format it).
+
+Reduntant statements added:
+
+- Adding food to the definition of CheeseyPizza, InterestingPizza and MeatyPizza which doesn’t change anything because it is the superclass
+- Adding not VegetarianPizza to the definition of MeatyPizza
+- Add hasTopping some PepperTopping to subclass of AmericanHot - Reduntant this subclass is already implied by AmericanHot being a subclass of hasTopping some HotGreenPepperTopping and hasTopping some JalapenoPepperTopping
+- Add MushroomTopping and OliveTopping are subclass of VegetarianTopping - this is redundant because MushroomTopping and OliveTopping are subclass of VegetableTopping which is in turn VegetarianTopping
+ 
+
+Submit the following files
+a text-file (one page will do) explaining
+which redundant statements you found in pizza.owl, or saying that you think pizza.owl is not redundant,
+An explanation and justification of the changes you made to pizza.owl to create consistent-pizza.owl
+An explanation and justification of the changes you made to pizza.owl to create redundant-pizza.owl
+consistent-pizza.owl
+redundant-pizza.owl
+Submit these as a single .zip file here. Make sure that your names are clearly indicated in the name of the zip-file that you upload. The deadline is 10 Oct, 23h59.
+Resources
+A Protege tutorial using the Pizza ontology is at http://protegewiki.stanford.edu/wiki/Protege4Pizzas10Minutes. The tutorial is about building the ontology, while you already get the constructed ontology and are asked to inspect and modify it, but it will help you navigate around Protege.
+Usage of Protege is pretty self-explanatory (once you understand the basics of Description Logics), but there is also plenty of instruction manuals around on the Web, for example http://bmir-stage.stanford.edu/doc/owl/getting-started.html
