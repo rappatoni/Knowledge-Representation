@@ -1,4 +1,5 @@
 from enum import Enum, unique
+from PIL import Image, ImageDraw, ImageFont
 
 class CausalGraph:
 
@@ -8,8 +9,25 @@ class CausalGraph:
         # list of relationships
         self.relationships = relationships
 
-    def draw_graph(self, state):
-        pass
+    #def draw_graph(self, state):
+    def draw_graph(self):
+        """
+
+        :return: A graphical representation of the current state.
+        """
+        #I'm assuming we draw just the present state here. We have to concatenate it to the graph of the already
+        #given history at a later point when we have all the possible branchings from the past state. I don't
+        #think we need the argument state - the CausalGraph should have all information needed in its entities right?
+        #So I removed it for now. 
+        image = Image.new("RGB", (100, 100), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle(((0, 00), (100, 100)), fill="white", outline="green")
+        coordinates = (10, 10)
+        for entity in self.entities:
+            draw.text(coordinates, str(entity.name)+" "+str(entity.current_magnitude), fill="black")
+            coordinates+=(0,20)
+        image.save("output.jpg", "JPEG")
+        return image
 
     def traverse_graph(self, initial_state):
         # we traverse the causal graph and apply relationships and return a list of next states
@@ -118,6 +136,10 @@ class Entity:
     def __init__(self, name, quantities):
         self.name = name
         # a set of qualitative quantities
+        #Am I correct in assuming that quantities= comparison group = quantity space (in Dynalearn)?
+        #If so, should we not add an attribute quantity? An entity can have multiple quanitities, each with its own
+        #quantity space and current magnitude. This isn't a necessary functionality now but will be needed for
+        #the "extra" stuff.
         self.quantities = quantities
         self.deriviate = Quantity.ZERO
         self.current_magnitude = Quantity.ZERO
@@ -140,6 +162,7 @@ class Entity:
         return self.current_magnitude
 
     def apply_derviate(self):
+        #Shouldn't it be greater or equal?
         if self.deriviate > Quantity.POSITIVE:
             return self.increase_magnitude()
         elif self.deriviate == Quantity.ZERO:
