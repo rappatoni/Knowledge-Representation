@@ -139,5 +139,14 @@ class Entity:
         self.current_magnitude = Quantity.decrease(self.current_magnitude, self.quantities)
         return self.current_magnitude
 
+    def apply_derviate(self):
+        if self.deriviate > Quantity.POSITIVE:
+            return self.increase_magnitude()
+        elif self.deriviate == Quantity.ZERO:
+            return self.current_magnitude
+        else:
+            return self.decrease_magnitude()
+
+
     def __str__(self):
         return "name={}, derivate={}, current_magnitude={}".format(self.name, self.derivate, self.current_magnitude)
