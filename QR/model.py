@@ -15,7 +15,7 @@ class CausalGraph:
         # we traverse the causal graph and apply relationships and return a list of next states
         pass
 
-class Relationship:
+class Relationship(object):
     def __init__(self, name, causal_party, receiving_party):
         self.name = name
         self.causal_party = causal_party
@@ -25,9 +25,9 @@ class Relationship:
         # should be implemented by children
         pass
 
-class InfluenceRelationship:
+class InfluenceRelationship(Relationship):
     def __init__(self, name, causal_party, receiving_party, sign):
-        super().__init__(self, name, causal_party, receiving_party)
+        super(InfluenceRelationship, self).__init__(name, causal_party, receiving_party)
         self.sign = sign
 
     def apply_relationship(self):
@@ -55,9 +55,9 @@ class InfluenceRelationship:
         return new_value
 
 
-class ProportionalRelationship:
+class ProportionalRelationship(Relationship):
     def __init__(self, name, causal_party, receiving_party, sign):
-        super().__init__(self, name, causal_party, receiving_party)
+        super(ProportionalRelationship, self).__init__(name, causal_party, receiving_party)
         self.sign = sign
 
     def apply_relationship(self):
@@ -113,7 +113,7 @@ class Quantity(Enum):
 
 
 class Entity:
-    deriviates = frozenset(Quantity.NEGATIVE, Quantity.ZERO, Quantity.POSITIVE)
+    deriviates = frozenset([Quantity.NEGATIVE, Quantity.ZERO, Quantity.POSITIVE])
 
     def __init__(self, name, quantities):
         self.name = name
