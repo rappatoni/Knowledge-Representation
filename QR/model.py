@@ -10,6 +10,11 @@ class CausalGraph:
         # list of relationships
         self.relationships = relationships
 
+    def print_states(self,i):
+        print("State {}: ".format(i))
+        for j in range(0,len(self.entities)):
+            print ("{}, {}".format(self.entities[j].current_magnitude, self.entities[j].current_derivative))
+
     #def draw_graph(self, state):
     '''def draw_graph(self):
         """
@@ -37,6 +42,10 @@ class CausalGraph:
             self.entities[j].current_magnitude = initial_state[i]
             self.entities[j].current_derivative = initial_state[i+1]
             j+=1
+        self.print_states(0)
+
+
+
 
 class Relationship(object):
     def __init__(self, name, causal_party, receiving_party):
