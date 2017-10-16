@@ -1,7 +1,6 @@
 from enum import Enum, unique
 #from PIL import Image, ImageDraw, ImageFont
 
-
 class CausalGraph:
 
     def __init__(self, entities, relationships):
@@ -9,11 +8,6 @@ class CausalGraph:
         self.entities = entities
         # list of relationships
         self.relationships = relationships
-
-    def print_states(self,i):
-        print("State {}: ".format(i))
-        for j in range(0,len(self.entities)):
-            print ("{}, {}".format(self.entities[j].current_magnitude, self.entities[j].current_derivative))
 
     #def draw_graph(self, state):
     '''def draw_graph(self):
@@ -35,17 +29,9 @@ class CausalGraph:
         image.save("output.jpg", "JPEG")
         return image'''
 
+    # we traverse the causal graph and apply relationships and return a list of next states
     def traverse_graph(self, initial_state):
-        # we traverse the causal graph and apply relationships and return a list of next states
-        j=0
-        for i in range(0,len(initial_state),2):
-            self.entities[j].current_magnitude = initial_state[i]
-            self.entities[j].current_derivative = initial_state[i+1]
-            j+=1
-        self.print_states(0)
-
-
-
+        pass
 
 class Relationship(object):
     def __init__(self, name, causal_party, receiving_party):
@@ -64,23 +50,23 @@ class InfluenceRelationship(Relationship):
 
     def apply_relationship(self):
         # TODO add checks for already applied change and
-        old_value = self.receiving_party.derivative
+        old_value = self.receiving_party.current_derivative
         new_value = None
         causal_value = self.causal_party.current_magnitude
-        if causal_value > Quantity.ZERO:
-            if self.sign == Quantity.POSITIVE:
+        if causal_value > QuantitySpace.ZERO:
+            if self.sign == QuantitySpace.POSITIVE:
                 # I+ and source +
                 new_value = self.receiving_party.increase_derivative()
             else:
                 # I+ and source -
-                new_value = self.receiving_party.decrease_derivative
-        elif causal_value == Quantity.ZERO:
+                new_value = self.receiving_party.decrease_derivative()
+        elif causal_value == QuantitySpace.ZERO:
             # if there is no influence, we don't change anything
             new_value = old_value
         else:
-            if self.sign == Quantity.POSITIVE:
+            if self.sign == QuantitySpace.POSITIVE:
                 # I- and source +
-                new_value = self.receiving_party.decrease_derivative
+                new_value = self.receiving_party.decrease_derivative()
             else:
                 # I- and source -
                 new_value = self.receiving_party.increase_derivative()
@@ -94,28 +80,28 @@ class ProportionalRelationship(Relationship):
 
     def apply_relationship(self):
         # TODO add checks for already applied change and
-        old_value = self.receiving_party.derivative
+        old_value = self.receiving_party.current_derivative
         new_value = None
-        causal_value = self.causal_party.derivative
-        if causal_value > Quantity.ZERO:
-            if self.sign == Quantity.POSITIVE:
+        causal_value = self.causal_party.current_derivative
+        if causal_value > Derivative.ZERO:
+            if self.sign == Derivative.POSITIVE:
                 # P+ and source +
                 new_value = self.receiving_party.increase_derivative()
             else:
                 # P+ and source -
-                new_value = self.receiving_party.decrease_derivative
-        elif causal_value == Quantity.ZERO:
-            # there is a proportional influnce of 0, we get the receiver to zero
-            if self.receiving_party.derivative > causal_value:
-                new_value = self.receiving_party.decrease_derivative
-            elif self.receiving_party.derivative == causal_value:
+                new_value = self.receiving_party.decrease_derivative()
+        elif causal_value == Derivative.ZERO:
+            # there is a proportional influence of 0, we get the receiver to zero
+            if self.receiving_party.current_derivative > causal_value:
+                new_value = self.receiving_party.decrease_derivative()
+            elif self.receiving_party.current_derivative == causal_value:
                 new_value = old_value
             else:
                 new_value = self.receiving_party.increase_derivative()
         else:
-            if self.sign == Quantity.POSITIVE:
+            if self.sign == Derivative.POSITIVE:
                 # P- and source +
-                new_value = self.receiving_party.decrease_derivative
+                new_value = self.receiving_party.decrease_derivative()
             else:
                 # P- and source -
                 new_value = self.receiving_party.increase_derivative()
@@ -123,47 +109,61 @@ class ProportionalRelationship(Relationship):
 
 
 @unique
-class Quantity(Enum):
-    def increase(self, comparion_group):
+class Variables(Enum):
+    def increase(self, comparison_group):
         new_value = self.value + 1
-        for single_quantity in comparion_group:
+        for single_quantity in comparison_group:
             if single_quantity.value == new_value:
                 return True, single_quantity
         return False, self
 
-    def decrease(self, comparion_group):
+    def decrease(self, comparison_group):
         new_value = self.value - 1
-        for single_quantity in comparion_group:
+        for single_quantity in comparison_group:
             if single_quantity.value == new_value:
                 return True, single_quantity
         return False, self
 
-class QuantitySpace(Quantity):
+
+class QuantitySpace(Variables):
     NEGATIVE = -1
     ZERO = 0
     POSITIVE = 1
     MAX = 2
 
-class Derivative(Quantity):
+    def increase(self, comparison_group):
+        super(QuantitySpace,self).increase()
+
+    def decrease(self, comparison_group):
+        super(QuantitySpace,self).decrease()
+
+
+class Derivative(Variables):
     NEGATIVE = -1
     ZERO = 0
     POSITIVE = 1
 
-class Entity:
-    #derivatives = frozenset([Quantity.NEGATIVE, Quantity.ZERO, Quantity.POSITIVE])
+    def increase(self, comparison_group):
+        super(Derivative,self).increase()
 
+    def decrease(self, comparison_group):
+        super(Derivative,self).decrease()
+
+
+class Quantity():
     def __init__(self, name, quantities):
         self.name = name
-        # a set of qualitative quantities
-        #Am I correct in assuming that quantities= comparison group = quantity space (in Dynalearn)?
-        #If so, should we not add an attribute quantity? An entity can have multiple quanitities, each with its own
-        #quantity space and current magnitude. This isn't a necessary functionality now but will be needed for
-        #the "extra" stuff.
         self.quantities = quantities
-        self.current_derivative = Derivative.ZERO
         self.current_magnitude = QuantitySpace.ZERO
+        self.current_derivative = Derivative.ZERO
+        # a set of qualitative quantities
+        # Am I correct in assuming that quantities= comparison group = quantity space (in Dynalearn)?
+        # If so, should we not add an attribute quantity? An entity can have multiple quanitities, each with its own
+        # quantity space and current magnitude. This isn't a necessary functionality now but will be needed for
+        # the "extra" stuff.
 
-    #TODO if a derivative changes twice in a loop, we want to know that but implement checking elsewhere
+    # TODO feasibility check whether moving from one state to another is possible
+    # TODO if a derivative changes twice in a loop, we want to know that but implement checking elsewhere
     def increase_derivative(self):
         self.current_derivative = Derivative.increase(self.current_derivative, self.quantities)
         return self.current_derivative
@@ -181,13 +181,23 @@ class Entity:
         return self.current_magnitude
 
     def apply_derivative(self):
-        #Shouldn't it be greater or equal?
-        if self.current_derivative > Quantity.POSITIVE:
+        if self.current_derivative >= Derivative.POSITIVE:
             return self.increase_magnitude
-        elif self.current_derivative == Quantity.ZERO:
+        elif self.current_derivative == Derivative.ZERO:
             return self.current_magnitude
         else:
             return self.decrease_magnitude
 
     def __str__(self):
-        return "name={}, derivate={}, current_magnitude={}".format(self.name, self.derivate, self.current_magnitude)
+        return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
+                                                                             self.current_derivative)
+
+class Entity:
+
+    def __init__(self,name):
+        self.name = name
+        self.quantities = []
+
+    def add_quantity(self, name, quantities):
+        self.quantities.append(Quantity(name,quantities))
+

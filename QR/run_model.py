@@ -2,31 +2,36 @@ import sys
 import model
 
 def main():
-    inflow = model.Entity(name="inflow", quantities=frozenset([model.QuantitySpace.ZERO,
+
+    tap = model.Entity(name="Tap")
+    container = model.Entity(name="Container")
+    sink = model.Entity(name="Sink")
+
+    tap.add_quantity(name="inflow", quantities=frozenset([model.QuantitySpace.ZERO,
                                                     model.QuantitySpace.POSITIVE]))
-    volume = model.Entity(name="volume", quantities=frozenset([model.QuantitySpace.ZERO,
+    container.add_quantity(name="volume", quantities=frozenset([model.QuantitySpace.ZERO,
                                                     model.QuantitySpace.POSITIVE,
                                                     model.QuantitySpace.MAX]))
-    outflow = model.Entity(name="outflow", quantities=frozenset([model.QuantitySpace.ZERO,
+    sink.add_quantity(name="outflow", quantities=frozenset([model.QuantitySpace.ZERO,
                                                     model.QuantitySpace.POSITIVE,
                                                     model.QuantitySpace.MAX]))
     entities = [
-        inflow,
-        volume,
-        outflow
+        tap,
+        container,
+        sink
     ]
 
     inflow_i = model.InfluenceRelationship(name="inflow_I+",
-                                            causal_party=inflow,
-                                            receiving_party=volume,
+                                            causal_party=tap.quantities[0],
+                                            receiving_party=container.quantities[0],
                                             sign=model.Derivative.POSITIVE)
     outflow_i = model.InfluenceRelationship(name="outflow_I-",
-                                            causal_party=outflow,
-                                            receiving_party=volume,
+                                            causal_party=sink.quantities[0],
+                                            receiving_party=container.quantities[0],
                                             sign=model.Derivative.NEGATIVE)
     volume_p = model.ProportionalRelationship(name="volume_P+",
-                                            causal_party=volume,
-                                            receiving_party=outflow,
+                                            causal_party=container.quantities[0],
+                                            receiving_party=sink.quantities[0],
                                             sign=model.Derivative.POSITIVE)
     relationships = [
         inflow_i,
