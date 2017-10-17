@@ -18,7 +18,7 @@ class CausalGraph:
         #I'm assuming we draw just the present state here. We have to concatenate it to the graph of the already
         #given history at a later point when we have all the possible branchings from the past state. I don't
         #think we need the argument state - the CausalGraph should have all information needed in its entities right?
-        #So I removed it for now. 
+        #So I removed it for now.
         image = Image.new("RGB", (100, 100), "white")
         draw = ImageDraw.Draw(image)
         draw.rectangle(((0, 00), (100, 100)), fill="white", outline="green")
@@ -133,37 +133,33 @@ class Quantity(Enum):
 class Entity:
     deriviates = frozenset([Quantity.NEGATIVE, Quantity.ZERO, Quantity.POSITIVE])
 
-    def __init__(self, name, quantities):
+    def __init__(self, name, quantity_space):
         self.name = name
-        # a set of qualitative quantities
-        #Am I correct in assuming that quantities= comparison group = quantity space (in Dynalearn)?
-        #If so, should we not add an attribute quantity? An entity can have multiple quanitities, each with its own
-        #quantity space and current magnitude. This isn't a necessary functionality now but will be needed for
-        #the "extra" stuff.
-        self.quantities = quantities
+        # a set of qualitative quantity_space
+        # TODO change to dict in order to support multiple quantities per entity.
+        self.quantity_space = quantity_space
         self.deriviate = Quantity.ZERO
         self.current_magnitude = Quantity.ZERO
 
     #TODO if a deriviate changes twice in a loop, we want to know that but implement checking elsewhere
     def increase_deriviate(self):
-        self.deriviate = Quantity.increase(self.deriviate, self.quantities)
+        self.deriviate = Quantity.increase(self.deriviate, self.quantity_space)
         return self.deriviate
 
     def decrease_deriviate(self):
-        self.deriviate = Quantity.decrease(self.deriviate, self.quantities)
+        self.deriviate = Quantity.decrease(self.deriviate, self.quantity_space)
         return self.deriviate
 
     def increase_magnitude(self):
-        self.current_magnitude = Quantity.increase(self.current_magnitude, self.quantities)
+        self.current_magnitude = Quantity.increase(self.current_magnitude, self.quantity_space)
         return self.current_magnitude
 
     def decrease_magnitude(self):
-        self.current_magnitude = Quantity.decrease(self.current_magnitude, self.quantities)
+        self.current_magnitude = Quantity.decrease(self.current_magnitude, self.quantity_space)
         return self.current_magnitude
 
     def apply_derviate(self):
-        #Shouldn't it be greater or equal?
-        if self.deriviate > Quantity.POSITIVE:
+        if self.deriviate > Quantity.ZERO:
             return self.increase_magnitude()
         elif self.deriviate == Quantity.ZERO:
             return self.current_magnitude
