@@ -1,6 +1,29 @@
 from enum import Enum, unique
 #from PIL import Image, ImageDraw, ImageFont
 
+class State:
+
+    def __init__(self, number, state):
+        self.number = number
+        self.state = state
+
+    def print_state(self):
+        print("State:{}".format(self.number))
+        for i in range(0,len(self.state),2):
+            print("{}, {}".format(self.state[i],self.state[i+1]))
+
+#TODO have to implement a tree data structure
+class State_Graph:
+
+    def __init__(self,head_node):
+        self.head = head_node
+        self.number_nodes = 1
+
+    #TODO Traverse all the nodes and print
+    def print_graph(self):
+        if (self.number_nodes == 1):
+            self.head.print_state()
+
 class CausalGraph:
 
     def __init__(self, entities, relationships):
@@ -31,7 +54,34 @@ class CausalGraph:
 
     # we traverse the causal graph and apply relationships and return a list of next states
     def traverse_graph(self, initial_state):
-        pass
+
+        current_state = initial_state
+
+        for i in range(0,len(initial_state),2):
+            for j in range(0,len(self.entities)):
+                for k in range(0,len(self.entities[j].quantities)):
+                    self.entities[j].quantities[k].current_magnitude = initial_state[i]
+                    self.entities[j].quantities[k].current_derivative = initial_state[i+1]
+
+        init_state = State(0, current_state)
+        state_graph = State_Graph(init_state)
+        state_graph.print_graph()
+
+        # inequality comparison not supported error
+        '''self.relationships[0].apply_relationship()
+        self.relationships[1].apply_relationship()
+        self.relationships[2].apply_relationship()
+
+        for i in range(0,len(initial_state),2):
+            for j in range(0,len(self.entities)):
+                for k in range(0,len(self.entities[j].quantities)):
+                    current_state[i] = self.entities[j].quantities[k].current_magnitude
+                    current_state[i+1] = self.entities[j].quantities[k].current_derivative
+
+        next_state = State(0, current_state)
+        next_state.print_state()'''
+
+
 
 class Relationship(object):
     def __init__(self, name, causal_party, receiving_party):
