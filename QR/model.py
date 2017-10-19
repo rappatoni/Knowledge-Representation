@@ -86,13 +86,13 @@ class Quantity:
         changed, self.current_magnitude = self.current_magnitude.decrease(self.quantity_space)
         return changed, self.current_magnitude
 
-    def apply_derivative(self) -> QuantityValue:
+    def apply_derivative(self) -> bool:
         if self.current_derivative > Derivative.ZERO:
-            return self.increase_magnitude()
+            return self.increase_magnitude()[0]
         elif self.current_derivative == Derivative.ZERO:
-            return self.current_magnitude
+            return False
         else:
-            return self.decrease_magnitude()
+            return self.decrease_magnitude()[0]
 
     def __str__(self) -> str:
         return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
@@ -149,7 +149,7 @@ class InfluenceRelationship(Relationship):
 
 
 class ProportionalRelationship(Relationship):
-    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, sign: Derivative):
+    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, sign: Derivative) -> None:
         super(ProportionalRelationship, self).__init__(name, causal_party, receiving_party)
         self.sign = sign
 
@@ -210,59 +210,87 @@ class CausalGraph:
 
     # we traverse the causal graph and apply relationships and return a list of next states
     def apply_state(self, state_values: State) -> None:
-        for i in range(0, len(self.entities)*2,2):
-            for j in range(0, len(self.entities)):
-                for k in range(0, len(self.entities[j].quantities)):
-                    self.entities[j].quantities[k].current_magnitude = state_values[i]
-                    self.entities[j].quantities[k].current_derivative = state_values[i+1]
+        counter = 0
+        for j in range(0, len(self.entities)):
+            for k in range(0, len(self.entities[j].quantities)):
+                self.entities[j].quantities[k].current_magnitude = state_values[j*2 + k]
+                self.entities[j].quantities[k].current_derivative = state_values[j*2 + k + 1]
 
     def record_state(self) -> State:
         state_values: State = list()
-        for i in range(0, len(self.entities)*2,2):
-            for j in range(0, len(self.entities)):
-                for k in range(0,len(self.entities[j].quantities)):
-                    state_values.append(self.entities[j].quantities[k].current_magnitude)
-                    state_values.append(self.entities[j].quantities[k].current_derivative)
+        for j in range(0, len(self.entities)):
+            for k in range(0,len(self.entities[j].quantities)):
+                state_values.append(self.entities[j].quantities[k].current_magnitude)
+                state_values.append(self.entities[j].quantities[k].current_derivative)
         return state_values
 
     def apply_point_changes(self) -> Tuple[bool, State]:
         # Here we apply changes from 0 to something
-        for i in range(0, len(self.entities)*2,2):
-            for j in range(0, len(self.entities)):
-                for k in range(0,len(self.entities[j].quantities)):
-                    state_values.append(self.entities[j].quantities[k].current_magnitude)
-                    state_values.append(self.entities[j].quantities[k].current_derivative)
+        changed = False
+        # start with applying derivative
+        for j in range(0, len(self.entities)):
+            for k in range(0,len(self.entities[j].quantities)):
+                if self.entities[j].quantities[k].current_magnitude == QuantityValue.ZERO:
+                    # if the quantity is zero and the derivative is not zero
+                    if self.entities[j].quantities[k].current_derivative != Derivative.ZERO:
+                        changed |= self.entities[j].quantities[k].apply_derivative()
+        # then we apply potential influence changes which could be pending
+        for relationship in self.relationships:
+            if type(relationship) == InfluenceRelationship and relationship.receiving_party.current_derivative == Derivative.ZERO:
+                changed |= relationship.apply_relationship()
+        return changed, self.record_state()
 
     def apply_static_changes(self) -> Tuple[bool, State]:
         # Here we apply ProportionalRelationship + EquivalenceRelationship
-        pass
-
+        changed = False
+        for relationship in self.relationships:
+            if type(relationship) == ProportionalRelationship:
+                changed |= relationship.apply_relationship()
+        return changed, self.record_state()
 
     def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State]]:
         # Here we apply InfluenceRelationship + Derivative
         changes = list()
         for relationship in self.relationships:
-            changed = relationship.apply_relationship()
-            if changed:
-                changes.append(self.record_state)
-            # we go back to the original state
-            self.apply_state(initial_state)
+            if type(relationship) == InfluenceRelationship:
+                changed = relationship.apply_relationship()
+                if changed:
+                    changes.append(self.record_state())
+                # we go back to the original state
+                self.apply_state(initial_state)
         for entity in self.entities:
             for quantity in entity.quantities:
-                changed, new_value = quantity.apply_derivative()
+                changed = quantity.apply_derivative()
                 if changed:
-                    changes.append(self.record_state)
+                    changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
         return len(changes) != 0, changes
 
     def compute_next_states(self, initial_state: State) -> List[State]:
         self.apply_state(initial_state)
-
-        changed, new_state_values = self.apply_immiediate_changes()
+        changed, new_state_values = self.apply_point_changes()
         if changed:
+            changed, new_state_values = self.apply_static_changes()
             return [new_state_values]
+        next_states = list()
         changed, new_states = self.apply_interval_changes(initial_state)
+        for state in new_states:
+            self.apply_state(state)
+            self.apply_static_changes()
+            next_states.append(self.record_state())
+        return next_states
+
+    def __str__(self) -> str:
+        value = ""
+        for j in range(0, len(self.entities)):
+            value += self.entities[j].name + "\n"
+            for k in range(0,len(self.entities[j].quantities)):
+                value += "\t{}\n".format(self.entities[j].quantities[k].name)
+                value += "\t\tm={}, d={}\n".format(
+                      self.entities[j].quantities[k].current_magnitude,
+                      self.entities[j].quantities[k].current_derivative)
+        return value
 
 class StateNode(object):
 
@@ -280,6 +308,18 @@ class StateNode(object):
         print("State:{}".format(self.number))
         for i in range(0,len(self.state_values),2):
             print("{}, {}".format(self.state_values[i],self.state_values[i+1]))
+
+    def __str__(self) -> str:
+        value = ""
+        parent_number = 0
+        if self.parent:
+            parent_number = self.parent.number
+        value += "{}: (parent={})\n".format(self.number, parent_number)
+        for i in range(0, len(self.state_values), 2):
+            value += "    m={}, d={}\n".format(self.state_values[i], self.state_values[i+1])
+        for child in self.children:
+            value += "    c={}".format(child.number)
+        return value
 
 #TODO have to implement a tree data structure
 class State_Graph(object):
@@ -323,3 +363,9 @@ class State_Graph(object):
             if state == state_node.state_values:
                 return True
         return False
+
+    def __str__(self) -> str:
+        value = ""
+        for key in self.states:
+            value += "{}".format(self.states[key])
+        return value

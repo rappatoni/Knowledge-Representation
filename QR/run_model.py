@@ -1,5 +1,6 @@
 import sys
 import model
+import pprint
 
 def main():
 
@@ -54,6 +55,8 @@ def main():
                                                   model.Derivative.ZERO],
                                                   causal_graph=causal_graph)
     states = state_graph.make_graph()
+    print(state_graph)
+
 
 if __name__ == "__main__":
     sys.exit(main())
