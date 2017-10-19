@@ -1,41 +1,197 @@
 from enum import Enum, unique
+from typing import Dict, List, Union, Tuple, Optional
 #from PIL import Image, ImageDraw, ImageFont
+class Variable(Enum):
+    def increase(self, comparison_group: List['Variable']) -> Tuple[bool, 'Variable']:
+        new_value = self.value + 1
+        for single_quantity in comparison_group:
+            if single_quantity.value == new_value:
+                return True, single_quantity
+        return False, self
 
-class State:
+    def decrease(self, comparison_group: List['Variable']) -> Tuple[bool, 'Variable']:
+        new_value = self.value - 1
+        for single_quantity in comparison_group:
+            if single_quantity.value == new_value:
+                return True, single_quantity
+        return False, self
 
-    def __init__(self, number, state):
-        self.number = number
-        self.state = state
+    def __lt__(self, other: 'Variable') -> bool:
+        return self.value < other.value
 
-    def print_state(self):
-        print("State:{}".format(self.number))
-        for i in range(0,len(self.state),2):
-            print("{}, {}".format(self.state[i],self.state[i+1]))
+    def ___le__(self, other: 'Variable') -> bool:
+        return self.value <= other.value
 
-#TODO have to implement a tree data structure
-class State_Graph:
+    def __eq__(self, other: 'Variable') -> bool:
+        return self.value == other.value
 
-    def __init__(self,head_node):
-        self.head = head_node
-        self.number_nodes = 1
+    def __ne__(self, other: 'Variable') -> bool:
+        return self.value != other.value
 
-    #TODO Traverse all the nodes and print
-    def print_graph(self):
-        if (self.number_nodes == 1):
-            self.head.print_state()
+    def __gt__(self, other: 'Variable') -> bool:
+        return self.value > other.value
+
+    def __ge__(self, other: 'Variable') -> bool:
+        return self.value >= other.value
+
+class QuantityValue(Variable):
+    NEGATIVE = -1
+    ZERO = 0
+    POSITIVE = 1
+    MAX = 2
+
+    def increase(self, comparison_group: List[Variable]) -> Tuple[bool, Variable]:
+        return super(QuantityValue, self).increase(comparison_group)
+
+    def decrease(self, comparison_group: List[Variable]) -> Tuple[bool, Variable]:
+        return super(QuantityValue, self).decrease(comparison_group)
+
+
+class Derivative(Variable):
+    NEGATIVE = -1
+    ZERO = 0
+    POSITIVE = 1
+
+    def increase(self, comparison_group: List[Variable]) -> Tuple[bool, Variable]:
+        return super(Derivative, self).increase(comparison_group)
+
+    def decrease(self, comparison_group: List[Variable]) -> Tuple[bool, Variable]:
+        return super(Derivative, self).decrease(comparison_group)
+
+
+class Quantity:
+    def __init__(self, name: str, quantity_space: List[QuantityValue]) -> None:
+        self.name = name
+        # a set of qualitative quantity_space
+        # TODO change to dict in order to support multiple quantities per entity.
+        self.quantity_space: List[QuantityValue] = quantity_space
+        self.current_magnitude: QuantityValue = QuantityValue.ZERO
+        self.current_derivative: Derivative = Derivative.ZERO
+
+    # TODO feasibility check whether moving from one state to another is possible
+    # TODO if a derivative changes twice in a loop, we want to know that but implement checking elsewhere
+    def increase_derivative(self) -> Tuple[bool, Derivative]:
+        changed, self.current_derivative = self.current_derivative.increase(Derivative)
+        return changed, self.current_derivative
+
+    def decrease_derivative(self) -> Tuple[bool, Derivative]:
+        changed, self.current_derivative = self.current_derivative.decrease(Derivative)
+        return changed, self.current_derivative
+
+    def increase_magnitude(self) -> Tuple[bool, QuantityValue]:
+        changed, self.current_magnitude = self.current_magnitude.increase(self.quantity_space)
+        return changed, self.current_magnitude
+
+    def decrease_magnitude(self) -> Tuple[bool, QuantityValue]:
+        changed, self.current_magnitude = self.current_magnitude.decrease(self.quantity_space)
+        return changed, self.current_magnitude
+
+    def apply_derivative(self) -> QuantityValue:
+        if self.current_derivative > Derivative.ZERO:
+            return self.increase_magnitude()
+        elif self.current_derivative == Derivative.ZERO:
+            return self.current_magnitude
+        else:
+            return self.decrease_magnitude()
+
+    def __str__(self) -> str:
+        return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
+                                                                             self.current_derivative)
+
+class Entity:
+
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.quantities: List[Quantity] = []
+
+    def add_quantity(self, quantity: Quantity) -> None:
+        self.quantities.append(quantity)
+
+class Relationship(object):
+    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity) -> None:
+        self.name = name
+        self.causal_party = causal_party
+        self.receiving_party = receiving_party
+
+    def apply_relationship(self) -> bool:
+        # should be implemented by children
+        pass
+
+class InfluenceRelationship(Relationship):
+    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, sign: Derivative) -> None:
+        super(InfluenceRelationship, self).__init__(name, causal_party, receiving_party)
+        self.sign = sign
+
+    def apply_relationship(self) -> bool:
+        causal_value = self.causal_party.current_magnitude
+        changed = False
+        if causal_value > QuantityValue.ZERO:
+            if self.sign == Derivative.POSITIVE:
+                # I+ and source +
+                changed, new_value = self.receiving_party.increase_derivative()
+            else:
+                # I+ and source -
+                changed, new_value = self.receiving_party.decrease_derivative()
+        elif causal_value == QuantityValue.ZERO:
+            # if there is no influence, we change the derivate to zero
+            if self.receiving_party.current_derivative != Derivative.ZERO:
+                changed = True
+            self.receiving_party.current_derivative = Derivative.ZERO
+            new_value = Derivative.ZERO
+        else:
+            if self.sign == Derivative.POSITIVE:
+                # I- and source +
+                changed, new_value = self.receiving_party.decrease_derivative()
+            else:
+                # I- and source -
+                changed, new_value = self.receiving_party.increase_derivative()
+        return changed
+
+
+class ProportionalRelationship(Relationship):
+    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, sign: Derivative):
+        super(ProportionalRelationship, self).__init__(name, causal_party, receiving_party)
+        self.sign = sign
+
+    def apply_relationship(self) -> bool:
+        # TODO add checks for already applied change and
+        changed = False
+        causal_value = self.causal_party.current_derivative
+        if causal_value > Derivative.ZERO:
+            if self.sign == Derivative.POSITIVE:
+                # P+ and source +
+                changed, new_value = self.receiving_party.increase_derivative()
+            else:
+                # P+ and source -
+                changed, new_value = self.receiving_party.decrease_derivative()
+        elif causal_value == Derivative.ZERO:
+            # there is a proportional influence of 0, we get the receiver to zero
+            if self.receiving_party.current_derivative > causal_value:
+                changed, new_value = self.receiving_party.decrease_derivative()
+            elif self.receiving_party.current_derivative < causal_value:
+                changed, new_value = self.receiving_party.increase_derivative()
+            # else we do nothing
+        else:
+            if self.sign == Derivative.POSITIVE:
+                # P- and source +
+                changed, new_value = self.receiving_party.decrease_derivative()
+            else:
+                # P- and source -
+                changed, new_value = self.receiving_party.increase_derivative()
+        return changed
+# Type definition
+State = List[Union[QuantityValue,Derivative]]
 
 class CausalGraph:
-
-    def __init__(self, entities, relationships):
+    def __init__(self, entities: List[Entity], relationships: List[Relationship]) -> None:
         # list of Entity
-        self.entities = entities
+        self.entities: List[Entity] = entities
         # list of relationships
-        self.relationships = relationships
+        self.relationships: List[Relationship] = relationships
 
     #def draw_graph(self, state):
-    '''def draw_graph(self):
+    '''def draw_graph(self) -> None:
         """
-
         :return: A graphical representation of the current state.
         """
         #I'm assuming we draw just the present state here. We have to concatenate it to the graph of the already
@@ -53,199 +209,117 @@ class CausalGraph:
         return image'''
 
     # we traverse the causal graph and apply relationships and return a list of next states
-    def traverse_graph(self, initial_state):
+    def apply_state(self, state_values: State) -> None:
+        for i in range(0, len(self.entities)*2,2):
+            for j in range(0, len(self.entities)):
+                for k in range(0, len(self.entities[j].quantities)):
+                    self.entities[j].quantities[k].current_magnitude = state_values[i]
+                    self.entities[j].quantities[k].current_derivative = state_values[i+1]
 
-        current_state = initial_state
-
-        for i in range(0,len(initial_state),2):
-            for j in range(0,len(self.entities)):
+    def record_state(self) -> State:
+        state_values: State = list()
+        for i in range(0, len(self.entities)*2,2):
+            for j in range(0, len(self.entities)):
                 for k in range(0,len(self.entities[j].quantities)):
-                    self.entities[j].quantities[k].current_magnitude = initial_state[i]
-                    self.entities[j].quantities[k].current_derivative = initial_state[i+1]
+                    state_values.append(self.entities[j].quantities[k].current_magnitude)
+                    state_values.append(self.entities[j].quantities[k].current_derivative)
+        return state_values
 
-        init_state = State(0, current_state)
-        state_graph = State_Graph(init_state)
-        state_graph.print_graph()
-
-        # inequality comparison not supported error
-        '''self.relationships[0].apply_relationship()
-        self.relationships[1].apply_relationship()
-        self.relationships[2].apply_relationship()
-
-        for i in range(0,len(initial_state),2):
-            for j in range(0,len(self.entities)):
+    def apply_point_changes(self) -> Tuple[bool, State]:
+        # Here we apply changes from 0 to something
+        for i in range(0, len(self.entities)*2,2):
+            for j in range(0, len(self.entities)):
                 for k in range(0,len(self.entities[j].quantities)):
-                    current_state[i] = self.entities[j].quantities[k].current_magnitude
-                    current_state[i+1] = self.entities[j].quantities[k].current_derivative
+                    state_values.append(self.entities[j].quantities[k].current_magnitude)
+                    state_values.append(self.entities[j].quantities[k].current_derivative)
 
-        next_state = State(0, current_state)
-        next_state.print_state()'''
-
-
-
-class Relationship(object):
-    def __init__(self, name, causal_party, receiving_party):
-        self.name = name
-        self.causal_party = causal_party
-        self.receiving_party = receiving_party
-
-    def apply_relationship(self):
-        # should be implemented by children
+    def apply_static_changes(self) -> Tuple[bool, State]:
+        # Here we apply ProportionalRelationship + EquivalenceRelationship
         pass
 
-class InfluenceRelationship(Relationship):
-    def __init__(self, name, causal_party, receiving_party, sign):
-        super(InfluenceRelationship, self).__init__(name, causal_party, receiving_party)
-        self.sign = sign
 
-    def apply_relationship(self):
-        # TODO add checks for already applied change and
-        old_value = self.receiving_party.current_derivative
-        new_value = None
-        causal_value = self.causal_party.current_magnitude
-        if causal_value > QuantitySpace.ZERO:
-            if self.sign == QuantitySpace.POSITIVE:
-                # I+ and source +
-                new_value = self.receiving_party.increase_derivative()
-            else:
-                # I+ and source -
-                new_value = self.receiving_party.decrease_derivative()
-        elif causal_value == QuantitySpace.ZERO:
-            # if there is no influence, we don't change anything
-            new_value = old_value
-        else:
-            if self.sign == QuantitySpace.POSITIVE:
-                # I- and source +
-                new_value = self.receiving_party.decrease_derivative()
-            else:
-                # I- and source -
-                new_value = self.receiving_party.increase_derivative()
-        return new_value
+    def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State]]:
+        # Here we apply InfluenceRelationship + Derivative
+        changes = list()
+        for relationship in self.relationships:
+            changed = relationship.apply_relationship()
+            if changed:
+                changes.append(self.record_state)
+            # we go back to the original state
+            self.apply_state(initial_state)
+        for entity in self.entities:
+            for quantity in entity.quantities:
+                changed, new_value = quantity.apply_derivative()
+                if changed:
+                    changes.append(self.record_state)
+                # we go back to the original state
+                self.apply_state(initial_state)
+        return len(changes) != 0, changes
 
+    def compute_next_states(self, initial_state: State) -> List[State]:
+        self.apply_state(initial_state)
 
-class ProportionalRelationship(Relationship):
-    def __init__(self, name, causal_party, receiving_party, sign):
-        super(ProportionalRelationship, self).__init__(name, causal_party, receiving_party)
-        self.sign = sign
+        changed, new_state_values = self.apply_immiediate_changes()
+        if changed:
+            return [new_state_values]
+        changed, new_states = self.apply_interval_changes(initial_state)
 
-    def apply_relationship(self):
-        # TODO add checks for already applied change and
-        old_value = self.receiving_party.current_derivative
-        new_value = None
-        causal_value = self.causal_party.current_derivative
-        if causal_value > Derivative.ZERO:
-            if self.sign == Derivative.POSITIVE:
-                # P+ and source +
-                new_value = self.receiving_party.increase_derivative()
-            else:
-                # P+ and source -
-                new_value = self.receiving_party.decrease_derivative()
-        elif causal_value == Derivative.ZERO:
-            # there is a proportional influence of 0, we get the receiver to zero
-            if self.receiving_party.current_derivative > causal_value:
-                new_value = self.receiving_party.decrease_derivative()
-            elif self.receiving_party.current_derivative == causal_value:
-                new_value = old_value
-            else:
-                new_value = self.receiving_party.increase_derivative()
-        else:
-            if self.sign == Derivative.POSITIVE:
-                # P- and source +
-                new_value = self.receiving_party.decrease_derivative()
-            else:
-                # P- and source -
-                new_value = self.receiving_party.increase_derivative()
-        return new_value
+class StateNode(object):
 
+    #type: ignore
+    def __init__(self, parent: Optional['StateNode'], number: int, state_values: State) -> None:
+        self.parent = parent
+        self.children: List['StateNode'] = list()
+        self.number = number
+        self.state_values: State = state_values[:]
 
-@unique
-class Variables(Enum):
-    def increase(self, comparison_group):
-        new_value = self.value + 1
-        for single_quantity in comparison_group:
-            if single_quantity.value == new_value:
-                return True, single_quantity
-        return False, self
+    def add_child(self, child: 'StateNode') -> None:
+        self.children.append(child)
 
-    def decrease(self, comparison_group):
-        new_value = self.value - 1
-        for single_quantity in comparison_group:
-            if single_quantity.value == new_value:
-                return True, single_quantity
-        return False, self
+    def print_state(self) -> None:
+        print("State:{}".format(self.number))
+        for i in range(0,len(self.state_values),2):
+            print("{}, {}".format(self.state_values[i],self.state_values[i+1]))
 
+#TODO have to implement a tree data structure
+class State_Graph(object):
 
-class QuantitySpace(Variables):
-    NEGATIVE = -1
-    ZERO = 0
-    POSITIVE = 1
-    MAX = 2
+    def __init__(self, initial_state: State, causal_graph: CausalGraph) -> None:
+        # we count from 1
+        self.head: StateNode = StateNode(None, 1, initial_state)
+        self.number_nodes: int = 1
+        self.states: Dict[str, StateNode] = {"1" : self.head}
+        self.causal_graph = causal_graph
 
-    def increase(self, comparison_group):
-        super(QuantitySpace,self).increase()
+    #TODO Traverse all the nodes and print
+    def print_graph(self) -> None:
+        if (self.number_nodes == 1):
+            self.head.print_state()
 
-    def decrease(self, comparison_group):
-        super(QuantitySpace,self).decrease()
+    def get_next_index(self) -> int:
+        self.number_nodes += 1
+        return self.number_nodes
 
+    def make_graph(self) -> Dict[str, StateNode]:
+        stack = [self.head]
+        while len(stack) != 0:
+            current_state = stack.pop()
+            next_states = self.causal_graph.compute_next_states(current_state.state_values)
+            for state in next_states:
+                if not self.state_already_exists(state):
+                    next_index = self.get_next_index()
+                    new_node = StateNode(current_state, next_index, state)
+                    stack.append(new_node)
+                    self.states[str(next_index)] = new_node
+                else:
+                    #TODO move the child link of the parent to the one it is a duplicate of
+                    pass
 
-class Derivative(Variables):
-    NEGATIVE = -1
-    ZERO = 0
-    POSITIVE = 1
+        return self.states
 
-    def increase(self, comparison_group):
-        super(Derivative,self).increase()
-
-    def decrease(self, comparison_group):
-        super(Derivative,self).decrease()
-
-
-class Quantity():
-    def __init__(self, name, quantity_space):
-        self.name = name
-        # a set of qualitative quantity_space
-        # TODO change to dict in order to support multiple quantities per entity.
-        self.quantity_space = quantity_space
-        self.current_magnitude = QuantitySpace.ZERO
-        self.current_derivative = Derivative.ZERO
-
-    # TODO feasibility check whether moving from one state to another is possible
-    # TODO if a derivative changes twice in a loop, we want to know that but implement checking elsewhere
-    def increase_derivative(self):
-        self.current_derivative = Derivative.increase(self.current_derivative, self.quantity_space)
-        return self.current_derivative
-
-    def decrease_derivative(self):
-        self.current_derivative = Derivative.decrease(self.current_derivative, self.quantity_space)
-        return self.current_derivative
-
-    def increase_magnitude(self):
-        self.current_magnitude = QuantitySpace.increase(self.current_magnitude, self.quantity_space)
-        return self.current_magnitude
-
-    def decrease_magnitude(self):
-        self.current_magnitude = QuantitySpace.decrease(self.current_magnitude, self.quantity_space)
-        return self.current_magnitude
-
-    def apply_derivative(self):
-        if self.current_derivative > Derivative.ZERO:
-            return self.increase_magnitude
-        elif self.current_derivative == Derivative.ZERO:
-
-            return self.current_magnitude
-        else:
-            return self.decrease_magnitude
-
-    def __str__(self):
-        return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
-                                                                             self.current_derivative)
-
-class Entity:
-
-    def __init__(self,name):
-        self.name = name
-        self.quantities = []
-
-    def add_quantity(self, name, quantities):
-        self.quantities.append(Quantity(name,quantities))
-
+    def state_already_exists(self, state: State) -> bool:
+        for state_number in self.states:
+            state_node = self.states[state_number]
+            if state == state_node.state_values:
+                return True
+        return False

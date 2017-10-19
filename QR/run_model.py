@@ -7,14 +7,20 @@ def main():
     container = model.Entity(name="Container")
     sink = model.Entity(name="Sink")
 
-    tap.add_quantity(name="inflow", quantities=frozenset([model.QuantitySpace.ZERO,
-                                                    model.QuantitySpace.POSITIVE]))
-    container.add_quantity(name="volume", quantities=frozenset([model.QuantitySpace.ZERO,
-                                                    model.QuantitySpace.POSITIVE,
-                                                    model.QuantitySpace.MAX]))
-    sink.add_quantity(name="outflow", quantities=frozenset([model.QuantitySpace.ZERO,
-                                                    model.QuantitySpace.POSITIVE,
-                                                    model.QuantitySpace.MAX]))
+    inflow = model.Quantity(name="inflow", quantity_space=[
+                                                    model.QuantityValue.ZERO,
+                                                    model.QuantityValue.POSITIVE])
+    tap.add_quantity(inflow)
+    volume = model.Quantity(name="volume", quantity_space=[
+                                                model.QuantityValue.ZERO,
+                                                model.QuantityValue.POSITIVE,
+                                                model.QuantityValue.MAX])
+    container.add_quantity(volume)
+    outflow = model.Quantity(name="outflow", quantity_space=[
+                                                    model.QuantityValue.ZERO,
+                                                    model.QuantityValue.POSITIVE,
+                                                    model.QuantityValue.MAX])
+    sink.add_quantity(outflow)
     entities = [
         tap,
         container,
@@ -22,16 +28,16 @@ def main():
     ]
 
     inflow_i = model.InfluenceRelationship(name="inflow_I+",
-                                            causal_party=tap.quantities[0],
-                                            receiving_party=container.quantities[0],
+                                            causal_party=inflow,
+                                            receiving_party=volume,
                                             sign=model.Derivative.POSITIVE)
     outflow_i = model.InfluenceRelationship(name="outflow_I-",
-                                            causal_party=sink.quantities[0],
-                                            receiving_party=container.quantities[0],
+                                            causal_party=outflow,
+                                            receiving_party=volume,
                                             sign=model.Derivative.NEGATIVE)
     volume_p = model.ProportionalRelationship(name="volume_P+",
-                                            causal_party=container.quantities[0],
-                                            receiving_party=sink.quantities[0],
+                                            causal_party=volume,
+                                            receiving_party=outflow,
                                             sign=model.Derivative.POSITIVE)
     relationships = [
         inflow_i,
@@ -39,13 +45,15 @@ def main():
         volume_p
     ]
 
-    graph = model.CausalGraph(entities=entities, relationships=relationships)
-    graph.traverse_graph(initial_state= ([model.QuantitySpace.ZERO,
+    causal_graph = model.CausalGraph(entities=entities, relationships=relationships)
+    state_graph = model.State_Graph(initial_state=[model.QuantityValue.ZERO,
                                                   model.Derivative.POSITIVE,
-                                                  model.QuantitySpace.ZERO,
+                                                  model.QuantityValue.ZERO,
                                                   model.Derivative.ZERO,
-                                                  model.QuantitySpace.ZERO,
-                                                  model.Derivative.ZERO]))
+                                                  model.QuantityValue.ZERO,
+                                                  model.Derivative.ZERO],
+                                                  causal_graph=causal_graph)
+    states = state_graph.make_graph()
 
 if __name__ == "__main__":
     sys.exit(main())
