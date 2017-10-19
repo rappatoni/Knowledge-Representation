@@ -1,0 +1,56 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+%\usepackage{apacite}
+\usepackage{caption}
+\begin{document}
+
+\author{
+  Jonsson, Haukur\\
+  \texttt{11137304}
+  \and
+  Rajamanickam, Santhosh\\
+  \texttt{11650702}
+  \and
+  Rapp, Max\\
+  \texttt{11404310}
+}
+\title{A Qualitative Reasoning Model of a simple (?) Container System\\
+	\large Project Report}
+\maketitle
+
+
+
+\section{Introduction}
+
+Everyday life requires engaging with countless systems of varying complexity. Successful engagement necessitates robust approximate prediction of their behaviour. However, understanding the dynamics of even the simplest of these systems would require solving a set of differential equations of prohibitive complexity.
+
+Rather than precise modelling, humans therefore engage in \textit{Qualitative Reasoning} to understand and predict the behaviour of systems surrounding them. Qualitative models are built by using simplifying \textit{assumptions} to construct a simplified ontology of the system including its objects and the causal relations between them as well as discretizing the quantities of the objects and the magnitudes of the relations. Such models are surprisingly powerful in predicting possible system outcomes.
+
+It is threfore arguable that understanding a domain is a function of one's qualitative model of that domain. In this paradigm, human (and machine) learning and teaching can then be understood in terms of building and adapting qualitative models of the world. 
+
+The computer assisted learning paradigm tries to leverage this approach by developing \textit{Human Level AI} that assists and interacts with the learner in building better qualitative models.
+
+The goal of this project is to implement a qualitative model of a container system that could serve in an interactive learning software by taking various inputs and returning a state graph and trace of the development of the system.
+
+\section{Three Container Models}
+
+The system to be modelled can be described as follows: A \textbf{tap} is used to regulate the influx of water into an open \textbf{container} with a \textbf{drain} through which water escapes.
+
+The basic ingredients needed to build a model for this system are the \textit{entities} which describe the basic objects the model contains. An entity may have one or more \textit{quantities} describing its magnitude. The quantities each have a magnitude constrained by a \textit{quantity space} containing its allowed values as well as a \textit{derivative} with quantity space (-,0,+) describing the current change in quantity. Between quantities \textit{causal relations} obtain. In our case these include \textit{influences} ($I^+$, $I^-$) and \textit{proportionalities} ($P^+$, $P^-$). Influences are positive or negative relationships from the magnitude of a quantity to the derivative of another. Proportionalities are positive or negative relationship from one derivative to another.
+
+Using these ingredients, depending on one's assumptions, models of varying complexity of the container system can be devised. Here we describe three. 
+
+\subsection {Model I}
+
+\textbf{Ontology:}
+\begin{itemize}
+	\item Entities: Tap, Container, Drain
+	\item Quantities(Spaces): Inflow (Zero; Plus), Volume (Zero, Plus, Max), Outflow (Zero, Plus, Max)
+	\item Relations: $I^+$(Inflow, Volume), $I^-$(Outflow, Volume), $P^+$(Volume, Outflow)
+\end{itemize}
+
+
+\end{document}
