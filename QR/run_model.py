@@ -40,10 +40,15 @@ def main():
                                             causal_party=volume,
                                             receiving_party=outflow,
                                             sign=model.Derivative.POSITIVE)
+    volume_eq = model.EquivalenceRelationship(name="volume_EQ",
+                                            causal_party=volume,
+                                            receiving_party=outflow,
+                                            equivalences=[model.QuantityValue.MAX, model.QuantityValue.ZERO])
     relationships = [
         inflow_i,
         outflow_i,
-        volume_p
+        volume_p,
+        volume_eq
     ]
 
     causal_graph = model.CausalGraph(entities=entities, relationships=relationships)

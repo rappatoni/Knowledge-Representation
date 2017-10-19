@@ -62,14 +62,10 @@ class Derivative(Variable):
 class Quantity:
     def __init__(self, name: str, quantity_space: List[QuantityValue]) -> None:
         self.name = name
-        # a set of qualitative quantity_space
-        # TODO change to dict in order to support multiple quantities per entity.
         self.quantity_space: List[QuantityValue] = quantity_space
         self.current_magnitude: QuantityValue = QuantityValue.ZERO
         self.current_derivative: Derivative = Derivative.ZERO
 
-    # TODO feasibility check whether moving from one state to another is possible
-    # TODO if a derivative changes twice in a loop, we want to know that but implement checking elsewhere
     def increase_derivative(self) -> Tuple[bool, Derivative]:
         changed, self.current_derivative = self.current_derivative.increase(Derivative)
         return changed, self.current_derivative
@@ -154,7 +150,6 @@ class ProportionalRelationship(Relationship):
         self.sign = sign
 
     def apply_relationship(self) -> bool:
-        # TODO add checks for already applied change and
         changed = False
         causal_value = self.causal_party.current_derivative
         if causal_value > Derivative.ZERO:
@@ -178,6 +173,20 @@ class ProportionalRelationship(Relationship):
             else:
                 # P- and source -
                 changed, new_value = self.receiving_party.increase_derivative()
+        return changed
+
+class EquivalenceRelationship(Relationship):
+    def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, equivalences: List[QuantityValue]) -> None:
+        super(EquivalenceRelationship, self).__init__(name, causal_party, receiving_party)
+        self.equivalences = equivalences
+
+    def apply_relationship(self) -> bool:
+        changed = False
+        for causal_value in self.equivalences:
+            if self.causal_party.current_magnitude == causal_value:
+                self.receiving_party.current_magnitude = causal_value
+                print("Applying equivalence")
+                changed = True
         return changed
 # Type definition
 State = List[Union[QuantityValue,Derivative]]
@@ -245,6 +254,8 @@ class CausalGraph:
         changed = False
         for relationship in self.relationships:
             if type(relationship) == ProportionalRelationship:
+                changed |= relationship.apply_relationship()
+            if type(relationship) == EquivalenceRelationship:
                 changed |= relationship.apply_relationship()
         return changed, self.record_state()
 
@@ -321,7 +332,6 @@ class StateNode(object):
             value += "    c={}".format(child.number)
         return value
 
-#TODO have to implement a tree data structure
 class State_Graph(object):
 
     def __init__(self, initial_state: State, causal_graph: CausalGraph) -> None:
@@ -348,6 +358,7 @@ class State_Graph(object):
             for state in next_states:
                 if not self.state_already_exists(state):
                     next_index = self.get_next_index()
+                    # TODO add children
                     new_node = StateNode(current_state, next_index, state)
                     stack.append(new_node)
                     self.states[str(next_index)] = new_node
