@@ -187,6 +187,11 @@ class EquivalenceRelationship(Relationship):
                 self.receiving_party.current_magnitude = causal_value
                 print("Applying equivalence")
                 changed = True
+        for causal_value in self.equivalences:
+            if self.receiving_party.current_magnitude == causal_value:
+                self.causal_party.current_magnitude = causal_value
+                print("Applying equivalence")
+                changed = True
         return changed
 # Type definition
 State = List[Union[QuantityValue,Derivative]]
@@ -240,6 +245,7 @@ class CausalGraph:
         for j in range(0, len(self.entities)):
             for k in range(0,len(self.entities[j].quantities)):
                 if self.entities[j].quantities[k].current_magnitude == QuantityValue.ZERO:
+                    # TODO deal with negative derivative for max case
                     # if the quantity is zero and the derivative is not zero
                     if self.entities[j].quantities[k].current_derivative != Derivative.ZERO:
                         changed |= self.entities[j].quantities[k].apply_derivative()
@@ -276,7 +282,21 @@ class CausalGraph:
                     changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
+        changed, state = self.apply_exo_decrease()
+        if changed:
+            changes.append(self.record_state())
+            self.apply_state(initial_state)
         return len(changes) != 0, changes
+
+    def apply_exo_decrease(self) -> Tuple[bool, State]:
+         # we know where it is...
+         changed, _ = self.entities[0].quantities[0].decrease_derivative()
+         return changed, self.record_state()
+
+    def am_consistent(self) -> bool:
+        # find quantities that increased and check if derivatives are of same sign
+        # find quantities which are affected by different influences
+        return True
 
     def compute_next_states(self, initial_state: State) -> List[State]:
         self.apply_state(initial_state)
@@ -289,7 +309,8 @@ class CausalGraph:
         for state in new_states:
             self.apply_state(state)
             self.apply_static_changes()
-            next_states.append(self.record_state())
+            if self.am_consistent():
+                next_states.append(self.record_state())
         return next_states
 
     def __str__(self) -> str:
@@ -329,7 +350,7 @@ class StateNode(object):
         for i in range(0, len(self.state_values), 2):
             value += "    m={}, d={}\n".format(self.state_values[i], self.state_values[i+1])
         for child in self.children:
-            value += "    c={}".format(child.number)
+            value += "    c={}\n".format(child.number)
         return value
 
 class State_Graph(object):
@@ -356,27 +377,26 @@ class State_Graph(object):
             current_state = stack.pop()
             next_states = self.causal_graph.compute_next_states(current_state.state_values)
             for state in next_states:
-                if not self.state_already_exists(state):
-                    next_index = self.get_next_index()
-                    # TODO add children
-                    new_node = StateNode(current_state, next_index, state)
+                exists, number = self.get_state_number(state)
+                if not exists:
+                    new_node = StateNode(current_state, number, state)
+                    current_state.add_child(new_node)
                     stack.append(new_node)
-                    self.states[str(next_index)] = new_node
+                    self.states[str(number)] = new_node
                 else:
-                    #TODO move the child link of the parent to the one it is a duplicate of
-                    pass
+                    current_state.add_child(self.states[str(number)])
 
         return self.states
 
-    def state_already_exists(self, state: State) -> bool:
+    def get_state_number(self, state: State) -> Tuple[bool, int]:
         for state_number in self.states:
             state_node = self.states[state_number]
             if state == state_node.state_values:
-                return True
-        return False
+                return True, int(state_number)
+        return False, self.get_next_index()
 
     def __str__(self) -> str:
         value = ""
         for key in self.states:
-            value += "{}".format(self.states[key])
+            value += "{}\n".format(self.states[key])
         return value
