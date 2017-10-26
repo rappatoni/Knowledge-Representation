@@ -1,3 +1,8 @@
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+#from networkx.drawing.nx_agraph import graphviz_layout, to_agraph
+#import pygraphviz as pgv
 from enum import Enum, unique
 from typing import Dict, List, Union, Tuple, Optional
 from collections import defaultdict
@@ -413,6 +418,24 @@ class StateNode(object):
             value += "    c={}\n".format(child.number)
         return value
 
+    '''def draw_node(self) -> None:
+        """
+        :return: A graphical representation of the current state.
+        """
+        # I'm assuming we draw just the present state here. We have to concatenate it to the graph of the already
+        # given history at a later point when we have all the possible branchings from the past state. I don't
+        # think we need the argument state - the CausalGraph should have all information needed in its entities right?
+        # So I removed it for now.
+        image = Image.new("RGB", (100, 100), "white")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle(((0, 00), (100, 100)), fill="white", outline="green")
+        coordinates = (10, 10)
+        #for node in self.entities:
+            draw.text(coordinates, str(self.state_values) + " " + str(self.current_magnitude), fill="black")
+            coordinates += (0, 20)
+        image.save("output.jpg", "JPEG")
+        return image'''
+
 class State_Graph(object):
 
     def __init__(self, initial_state: State, causal_graph: CausalGraph) -> None:
@@ -423,9 +446,36 @@ class State_Graph(object):
         self.causal_graph = causal_graph
 
     #TODO Traverse all the nodes and print
-    def print_graph(self) -> None:
-        if (self.number_nodes == 1):
-            self.head.print_state()
+    def print_graph(self, states) -> None:
+        print("it begins")
+        G = nx.DiGraph()
+        get_edges=[]
+        get_nodes={}
+        for key in states:
+            for child in states[key].children:
+                get_edges+=[(states[key].number, child.number)]
+                #get_nodes[int(key)]=[states[key].__str__()]
+            print(get_edges)
+            print(states["1"].__str__())
+            print(get_nodes[1])
+        #G.add_edges_from(get_edges)
+        G.add_nodes_from(get_nodes)
+        #if (self.number_nodes == 1):
+            #self.head.print_state()
+        G.graph['graph'] = {'rankdir': 'TD'}
+        G.graph['node'] = {'shape': 'square'}
+        G.graph['edges'] = {'arrowsize': '4.0'}
+
+        #A = to_agraph(G)
+        #print(A)
+        #A.layout('dot')
+        #A.draw('abcd.png')
+
+        pos = nx.spring_layout(G)
+        nx.draw_networkx_nodes(G, pos)
+        nx.draw_networkx_labels(G, pos)
+        nx.draw_networkx_edges(G, pos, arrows=True)
+        plt.show()
 
     def get_next_index(self) -> int:
         self.number_nodes += 1
