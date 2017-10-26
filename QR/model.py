@@ -240,8 +240,9 @@ class CausalGraph:
         counter = 0
         for j in range(0, len(self.entities)):
             for k in range(0, len(self.entities[j].quantities)):
-                self.entities[j].quantities[k].current_magnitude = state_values[j*2 + k]
-                self.entities[j].quantities[k].current_derivative = state_values[j*2 + k + 1]
+                self.entities[j].quantities[k].current_magnitude = state_values[counter]
+                self.entities[j].quantities[k].current_derivative = state_values[counter + 1]
+                counter += 2
 
     def record_state(self) -> State:
         state_values: State = list()
