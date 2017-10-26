@@ -84,18 +84,16 @@ class Quantity:
         return changed, self.current_magnitude
 
     def apply_derivative(self) -> bool:
+        changed = False
         if self.current_derivative > Derivative.ZERO:
             changed, new_value = self.increase_magnitude()
-            if changed:
-                print("{} derivate was applied".format(self.name))
-            return changed
-        elif self.current_derivative == Derivative.ZERO:
-            return False
-        else:
+
+        elif self.current_derivative < Derivative.ZERO:
             changed, new_value = self.decrease_magnitude()
-            if changed:
-                print("{} derivate was applied".format(self.name))
-            return changed
+
+        if changed:
+            print("{} derivate was applied".format(self.name))
+        return changed
 
     def __str__(self) -> str:
         return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
@@ -193,6 +191,7 @@ class EquivalenceRelationship(Relationship):
 
     def apply_relationship(self) -> bool:
         changed = False
+        # a causal value is the value in the equivalence relationship which needs to be equivalent.
         for causal_value in self.equivalences:
             if self.causal_party.current_magnitude == causal_value:
                 if self.receiving_party.current_magnitude != causal_value:
@@ -238,31 +237,33 @@ class CausalGraph:
     # we traverse the causal graph and apply relationships and return a list of next states
     def apply_state(self, state_values: State) -> None:
         counter = 0
-        for j in range(0, len(self.entities)):
-            for k in range(0, len(self.entities[j].quantities)):
-                self.entities[j].quantities[k].current_magnitude = state_values[counter]
-                self.entities[j].quantities[k].current_derivative = state_values[counter + 1]
+        for e_index, entity in enumerate(self.entities):
+            for q_index, quantity in enumerate(entity.quantities):
+                quantity.current_magnitude = state_values[counter]
+                quantity.current_derivative = state_values[counter + 1]
                 counter += 2
 
     def record_state(self) -> State:
         state_values: State = list()
-        for j in range(0, len(self.entities)):
-            for k in range(0,len(self.entities[j].quantities)):
-                state_values.append(self.entities[j].quantities[k].current_magnitude)
-                state_values.append(self.entities[j].quantities[k].current_derivative)
+        for e_index, entity in enumerate(self.entities):
+            for q_index, quantity in enumerate(entity.quantities):
+                state_values.append(quantity.current_magnitude)
+                state_values.append(quantity.current_derivative)
         return state_values
 
     def apply_point_changes(self) -> Tuple[bool, State]:
         # Here we apply changes from 0 to something
         changed = False
         # start with applying derivative
-        for j in range(0, len(self.entities)):
-            for k in range(0,len(self.entities[j].quantities)):
-                if self.entities[j].quantities[k].current_magnitude == QuantityValue.ZERO:
-                    # TODO deal with negative derivative for max case
-                    # if the quantity is zero and the derivative is not zero
-                    if self.entities[j].quantities[k].current_derivative != Derivative.ZERO:
-                        changed |= self.entities[j].quantities[k].apply_derivative()
+        for e_index, entity in enumerate(self.entities):
+            for q_index, quantity in enumerate(entity.quantities):
+                if quantity.current_derivative != Derivative.ZERO:
+
+                    if quantity.current_magnitude == QuantityValue.ZERO:
+                        changed |= quantity.apply_derivative()
+                    if quantity.current_magnitude == QuantityValue.MAX:
+                        changed |= quantity.apply_derivative()
+
         # then we apply potential influence changes which could be pending
         for relationship in self.relationships:
             if type(relationship) == InfluenceRelationship and relationship.receiving_party.current_derivative == Derivative.ZERO:
@@ -272,11 +273,16 @@ class CausalGraph:
     def apply_static_changes(self) -> Tuple[bool, State]:
         # Here we apply ProportionalRelationship + EquivalenceRelationship
         changed = False
-        for relationship in self.relationships:
-            if type(relationship) == ProportionalRelationship:
-                changed |= relationship.apply_relationship()
-            if type(relationship) == EquivalenceRelationship:
-                changed |= relationship.apply_relationship()
+        this_round_changed = True
+        while this_round_changed:
+            this_round_changed = False
+            for relationship in self.relationships:
+                if type(relationship) == ProportionalRelationship:
+                    this_round_changed |= relationship.apply_relationship()
+                if type(relationship) == EquivalenceRelationship:
+                    this_round_changed |= relationship.apply_relationship()
+            changed |= this_round_changed
+
         return changed, self.record_state()
 
     def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State]]:
@@ -313,12 +319,11 @@ class CausalGraph:
          return changed, self.record_state()
 
     def am_consistent(self, old_state: State) -> bool:
-        print("Checking consistency of state. Parent state:")
-        StateNode.print_state(old_state)
+        counter = 0
         for e_index, entity in enumerate(self.entities):
             for q_index, quantity in enumerate(entity.quantities):
                 # if the quantity increased the derivative better be positive
-                if quantity.current_magnitude > old_state[e_index*2 + q_index]:
+                if quantity.current_magnitude > old_state[counter]:
                      if quantity.current_derivative <= Derivative.ZERO:
                          print("Illegal state thrown away. {} magnitude's increased but derivative was <= 0".format(quantity.name))
                          return False
@@ -327,6 +332,8 @@ class CausalGraph:
                      if quantity.current_derivative >= Derivative.ZERO:
                          print("Illegal state thrown away. {} magnitude's decreased but derivative was >= 0".format(quantity.name))
                          return False
+            counter += 1
+
         influences: Dict[str, List[InfluenceRelationship]] = defaultdict(lambda: list())
         for relationship in self.relationships:
             if type(relationship) == InfluenceRelationship:
