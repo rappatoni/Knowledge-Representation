@@ -449,7 +449,6 @@ class State_Graph(object):
         self.states: Dict[str, StateNode] = {"1" : self.head}
         self.causal_graph = causal_graph
 
-    #TODO Traverse all the nodes and print
     def print_graph(self, states) -> None:
         G = nx.DiGraph()
         get_edges=[]
@@ -475,6 +474,7 @@ class State_Graph(object):
         nodes.set_edgecolor('black')
         nx.draw_networkx_labels(G, pos)
         nx.draw_networkx_edges(G, pos, arrows=True)
+        plt.axis('off')
         plt.show()
 
     def get_next_index(self) -> int:
