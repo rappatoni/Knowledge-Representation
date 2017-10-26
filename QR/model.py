@@ -451,7 +451,6 @@ class State_Graph(object):
 
     #TODO Traverse all the nodes and print
     def print_graph(self, states) -> None:
-        print("it begins")
         G = nx.DiGraph()
         get_edges=[]
         get_nodes={}
@@ -459,7 +458,6 @@ class State_Graph(object):
             for child in states[key].children:
                 get_edges+=[(states[key].number, child.number)]
             get_nodes[int(key)]=[states[key].number]
-            print(get_nodes)
         G.add_edges_from(get_edges)
 
         #Fix initial node positions for better graphs
