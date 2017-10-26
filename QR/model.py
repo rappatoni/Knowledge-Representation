@@ -1,5 +1,6 @@
 from enum import Enum, unique
 from typing import Dict, List, Union, Tuple, Optional
+from collections import defaultdict
 #from PIL import Image, ImageDraw, ImageFont
 class Variable(Enum):
     def increase(self, comparison_group: List['Variable']) -> Tuple[bool, 'Variable']:
@@ -84,11 +85,17 @@ class Quantity:
 
     def apply_derivative(self) -> bool:
         if self.current_derivative > Derivative.ZERO:
-            return self.increase_magnitude()[0]
+            changed, new_value = self.increase_magnitude()
+            if changed:
+                print("{} derivate was applied".format(self.name))
+            return changed
         elif self.current_derivative == Derivative.ZERO:
             return False
         else:
-            return self.decrease_magnitude()[0]
+            changed, new_value = self.decrease_magnitude()
+            if changed:
+                print("{} derivate was applied".format(self.name))
+            return changed
 
     def __str__(self) -> str:
         return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
@@ -141,6 +148,8 @@ class InfluenceRelationship(Relationship):
             else:
                 # I- and source -
                 changed, new_value = self.receiving_party.increase_derivative()
+        if changed:
+            print("{} was applied".format(self.name))
         return changed
 
 
@@ -173,6 +182,8 @@ class ProportionalRelationship(Relationship):
             else:
                 # P- and source -
                 changed, new_value = self.receiving_party.increase_derivative()
+        if changed:
+            print("{} was applied".format(self.name))
         return changed
 
 class EquivalenceRelationship(Relationship):
@@ -184,14 +195,16 @@ class EquivalenceRelationship(Relationship):
         changed = False
         for causal_value in self.equivalences:
             if self.causal_party.current_magnitude == causal_value:
-                self.receiving_party.current_magnitude = causal_value
-                print("Applying equivalence")
-                changed = True
+                if self.receiving_party.current_magnitude != causal_value:
+                    self.receiving_party.current_magnitude = causal_value
+                    changed = True
         for causal_value in self.equivalences:
             if self.receiving_party.current_magnitude == causal_value:
-                self.causal_party.current_magnitude = causal_value
-                print("Applying equivalence")
-                changed = True
+                if self.causal_party.current_magnitude != causal_value:
+                    self.causal_party.current_magnitude = causal_value
+                    changed = True
+        if changed:
+            print("{} was applied".format(self.name))
         return changed
 # Type definition
 State = List[Union[QuantityValue,Derivative]]
@@ -272,6 +285,7 @@ class CausalGraph:
             if type(relationship) == InfluenceRelationship:
                 changed = relationship.apply_relationship()
                 if changed:
+                    print("Possible branch")
                     changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
@@ -279,11 +293,13 @@ class CausalGraph:
             for quantity in entity.quantities:
                 changed = quantity.apply_derivative()
                 if changed:
+                    print("Possible branch")
                     changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
         changed, state = self.apply_exo_decrease()
         if changed:
+            print("Possible branch")
             changes.append(self.record_state())
             self.apply_state(initial_state)
         return len(changes) != 0, changes
@@ -291,26 +307,69 @@ class CausalGraph:
     def apply_exo_decrease(self) -> Tuple[bool, State]:
          # we know where it is...
          changed, _ = self.entities[0].quantities[0].decrease_derivative()
+         if changed:
+             print("2nd order derivative applied")
          return changed, self.record_state()
 
-    def am_consistent(self) -> bool:
-        # find quantities that increased and check if derivatives are of same sign
-        # find quantities which are affected by different influences
+    def am_consistent(self, old_state: State) -> bool:
+        print("Checking consistency of state. Parent state:")
+        StateNode.print_state(old_state)
+        for e_index, entity in enumerate(self.entities):
+            for q_index, quantity in enumerate(entity.quantities):
+                # if the quantity increased the derivative better be positive
+                if quantity.current_magnitude > old_state[e_index*2 + q_index]:
+                     if quantity.current_derivative <= Derivative.ZERO:
+                         print("Illegal state thrown away. {} magnitude's increased but derivative was <= 0".format(quantity.name))
+                         return False
+                # if the quantity decreased the derivative better be negative
+                if quantity.current_magnitude < old_state[e_index*2 + q_index]:
+                     if quantity.current_derivative >= Derivative.ZERO:
+                         print("Illegal state thrown away. {} magnitude's decreased but derivative was >= 0".format(quantity.name))
+                         return False
+        influences: Dict[str, List[InfluenceRelationship]] = defaultdict(lambda: list())
+        for relationship in self.relationships:
+            if type(relationship) == InfluenceRelationship:
+                influences[relationship.receiving_party.name].append(relationship)
+        for key in influences:
+            # we only check if there are two, we don't check if they are +/-
+            if len(influences[key]) >= 2:
+                positive_causal_party = None
+                negative_causal_party = None
+                victim = None
+                for relationship in influences[key]:
+                    victim = relationship.receiving_party
+                    if relationship.sign == Derivative.POSITIVE:
+                        positive_causal_party = relationship.causal_party
+                    if relationship.sign == Derivative.NEGATIVE:
+                        negative_causal_party = relationship.causal_party
+
+                if positive_causal_party.current_magnitude != QuantityValue.ZERO and negative_causal_party.current_magnitude != QuantityValue.ZERO and positive_causal_party.current_derivative != negative_causal_party.current_derivative:
+                    if victim.current_derivative == Derivative.ZERO:
+                        print("Illegal state thrown away. I+(A,B) and I-(C,B) and delta A  != delta C then delta B != 0".format())
+                        return False
         return True
 
     def compute_next_states(self, initial_state: State) -> List[State]:
         self.apply_state(initial_state)
+        StateNode.print_state(initial_state)
         changed, new_state_values = self.apply_point_changes()
         if changed:
             changed, new_state_values = self.apply_static_changes()
             return [new_state_values]
         next_states = list()
         changed, new_states = self.apply_interval_changes(initial_state)
+        if len(new_states) == 0:
+            print("No changes")
         for state in new_states:
             self.apply_state(state)
             self.apply_static_changes()
-            if self.am_consistent():
+            if self.am_consistent(initial_state):
                 next_states.append(self.record_state())
+            else:
+                print("****************")
+                print("Inconsistent state:")
+                StateNode.print_state(self.record_state())
+                print("****************")
         return next_states
 
     def __str__(self) -> str:
@@ -336,10 +395,10 @@ class StateNode(object):
     def add_child(self, child: 'StateNode') -> None:
         self.children.append(child)
 
-    def print_state(self) -> None:
-        print("State:{}".format(self.number))
-        for i in range(0,len(self.state_values),2):
-            print("{}, {}".format(self.state_values[i],self.state_values[i+1]))
+    @staticmethod
+    def print_state(state: State) -> None:
+        for i in range(0,len(state),2):
+            print("{}, {}".format(state[i], state[i+1]))
 
     def __str__(self) -> str:
         value = ""
@@ -375,6 +434,8 @@ class State_Graph(object):
         stack = [self.head]
         while len(stack) != 0:
             current_state = stack.pop()
+            print("===================")
+            print("state number: {}".format(current_state.number))
             next_states = self.causal_graph.compute_next_states(current_state.state_values)
             for state in next_states:
                 exists, number = self.get_state_number(state)
