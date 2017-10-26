@@ -135,10 +135,6 @@ def main():
         
     states = state_graph.make_graph()
     print(state_graph)
-    print(states.keys())
-    print(states["1"])
-    print(type(states["1"]))
-    print(states['1'].children)
     state_graph.print_graph(states)
 
 if __name__ == "__main__":
