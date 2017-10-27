@@ -48,7 +48,16 @@ Another component we need are \textit{correspondences}. Correspondences can be i
 
 Using these ingredients, depending on one's assumptions, models of varying complexity of the container system can be devised. Here we describe two. 
 
+
+
 \subsection {Model I}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics{Simple_Flow.png}
+	\caption{Ontology of Model I. Note the red entities which indicate conditions that have to be met for the relations to apply.}
+	\label{fig: figure1}
+\end{figure}
 
 \textbf{Ontology:}
 \begin{itemize}
@@ -61,19 +70,21 @@ Using these ingredients, depending on one's assumptions, models of varying compl
 The ontology above is depicted in figure \ref{fig: figure1}. To study the development of the system we not only need an ontology but also an \textit{initial state} (or \textit{scenario}). figure \ref{figure2} represents the scenario which we aim to implement for Model I. Namely, we assume that inflow and outflow are at zero in the beginning and that the inflow is exogenuously determined by a function taking the form of a positive parabola. I.e. $\delta$Inflow will initially increase but eventually stagnate and start to decrease until it reaches zero.
 
 
-\begin{figure}
-	\includegraphics{Simple_Flow.png}
-	\caption{Ontology of Model I. Note the red entities which indicate conditions that have to be met for the relations to apply}
-	\label{fig: figure1}
-\end{figure}
-
-\begin{figure}
+\begin{figure}[!h]
+	\centering
 	\includegraphics{Scenario_1.png}
-	\caption{Initial state of Model I}
+	\caption{Initial state of Model I.}
 	\label{figure2}
 \end{figure}
 
 \subsection {Model II}
+
+\begin{figure}[!h]
+	\centering
+	\includegraphics{Extra_Flow.png}
+	\caption{In the more complex Model II, outflow is no longer determined by volume but by pressure which is in turn determined by the height of the fluid in the container which is proportiional to the volume.}
+	\label{figure3}
+\end{figure}
 
 \textbf{Ontology:}
 \begin{itemize}
@@ -84,37 +95,35 @@ The ontology above is depicted in figure \ref{fig: figure1}. To study the develo
 
 The more complex ontology of Model II is shown in figure \ref{figure3} and the corresponding initial state (unchanged except for entities) in figure \ref{figure4}.
 
-\begin{figure}
-	\includegraphics{Extra_Flow.png}
-	\caption{In the more complex Model II, outflow is no longer determined by volume but by pressure which is in turn determined by the height of the fluid in the container which is proportiional to the volume.}
-	\label{figure3}
-\end{figure}
-
-\begin{figure}
+\begin{figure}[!h]
+	\centering
 	\includegraphics{Scenario_2.png}
-	\caption{Initial state of Model II}
+	\caption{Initial state of Model II.}
 	\label{figure4}
 \end{figure}
 
 \section{Target Simulation and State Graph}
 
-to begin with, we set up Model I and Model II in the QR-software \textit{Garp3} to create benchmarks for our implementations. Simulations using default modelling settings (figure \ref{figure5}) lead in both cases to state graphs containing 13 nodes. As expected, the unique end state (state 12 in both cases) consists of an empty container with zero in- and outflow (figure \ref{figure6}). Interestingly, the graphs of the two models look completely identical inspite of the added quantities in Model II (figure \ref{figure7}).
+To begin with, we set up Model I and Model II in the QR-software \textit{Garp3} to create benchmarks for our implementations. Simulations using default modelling settings (figure \ref{figure5}) lead in both cases to state graphs containing 13 nodes. As expected, the unique end state (state 12 in both cases) consists of an empty container with zero in- and outflow (figure \ref{figure9}). Interestingly, the graphs of the two models look completely identical inspite of the added quantities in Model II (figure \ref{figure7}).
 
-\begin{figure}
-	\includegraphics{Modelling_Settings}
+
+\begin{figure}[!h]
+	\makebox[\textwidth][c]{\includegraphics[scale=0.7]{Modelling_Settings}}
 	\caption{The modelling preferences used in our benchmark simulations.}
 	\label{figure5}
 \end{figure}
 
-\begin{figure}
-	\includegraphics{End_State}
-	\includegraphics{End_State_Extra}
-	\caption{The end states of the simulations of Model I and II respectively.}
-	\label{figure6}
-\end{figure}
+
+%\begin{figure}
+%	\includegraphics{End_State}
+%	\includegraphics{End_State_Extra}
+%	\caption{The end states of the simulations of Model I and II respectively.}
+%	\label{figure6}
+%\end{figure}
 
 \begin{figure}
-	\includegraphics{Simple_State_Graph.png}
+	\centering
+	\includegraphics[scale=0.9]{Simple_State_Graph.png}
 	\caption{State graph for Model I and II. While the states represented differ in the number of quantities they represent, the identity of the graph representations indicate that Model I and Model II describe the same system in two different yet - with respect to evolution - equivalent ways.}
 	\label{figure7}
 \end{figure}
@@ -126,9 +135,9 @@ to begin with, we set up Model I and Model II in the QR-software \textit{Garp3} 
 We now set out to recreate the state graphs of Model I and II using a much simpler implementation. Namely, of the simulation preferences described in figure \ref{figure5} we will only implement the following:
 
 
-\textbf{Basic Epsilon Ordering:} Any termination that consists of a point-value changing to an interval is immediate and takes priority over changes that take time such as interval to landmark changes. \textcolor{red}{if more that one immediate terminations is applicable, ...}. In this way we divide the termination calculation into two phases \textit{static changes} and \textit{dynamic changes}. Branching can take place only in the latter phase.
+\textbf{Basic Epsilon Ordering:} Any termination that consists of a point-value changing to an interval is immediate and takes priority over changes that take time such as interval to landmark changes. If more than one immediate terminations is applicable we apply them in the ordering specified in Algorithm \ref{pointchanges}. In this way we divide the termination calculation into two phases \textit{static changes} and \textit{dynamic changes}. Branching can take place only in the latter phase.
 
-\textbf{Derivative values are point values:} or equivalently proportionalities act immediately. This assumption can be justified by the fact that proportionalities are usually the result of having different descriptions of the same state of a system that are pragmatically useful but ontologically reducible to each other. In our case, consider the water column in the container in Model II: the height of the column, its volume and the pressure in the column are three different yet dependent ways of describing the same state of the system; thus if one of these quantities changes, so do the others by definition. Proportionality here thus merely describes the same change by different names and therefore acts immediately.
+\textbf{Derivative values are point values:} Note that this entails that proportionalities act immediately. This assumption can be justified by the fact that proportionalities are usually the result of having different descriptions of the same state of a system that are pragmatically useful but ontologically reducible to each other. In our case, consider the water column in the container in Model II: the height of the column, its volume and the pressure in the column are three different yet dependent ways of describing the same state of the system; thus if one of these quantities changes, so do the others by definition. Proportionality here thus merely describes the same change by different names and therefore acts immediately.
 
 After inferring terminations, in a third phase, we check the consistency of the termination candidates against the following conditions:
 
@@ -140,13 +149,21 @@ After inferring terminations, in a third phase, we check the consistency of the 
 
 \textbf{No causation by correspondence:} implications and equivalences act as sanity checks and let us throw out inconsistent states but cannot be used in the static/dynamic phases.
 
-\textbf{No fleeting equalities:} If $I^+(A,B)$=$I^-(C,B)$ and $\delta A \neq \delta C$, $\delta B \neq 0$. The justification for this assumption is that such points of fleeting inequality should take priority by epsilon ordering since moving away from a point of equality is immediate. Therefore they should immediately terminate into a different state. However, they are not spotted by our basic epsilon ordering and hence we discard them here.
+\textbf{No fleeting equalities:} If $I^+(A,B)$, $I^-(C,B)$, $A=C$ and $\delta A \neq \delta C$, $\delta B \neq 0$. The justification for this assumption is that such points of fleeting inequality should take priority by epsilon ordering since moving away from a point of equality is immediate. Therefore they should immediately terminate into a different state.
+
+\begin{figure}[!h]
+	\includegraphics{Value_History_Extra}
+	\caption{Value history of Model I \& II (lower part). Notice that state 12 is the end state in both cases.}
+	\label{figure9}
+\end{figure}
+
+\pagebreak
 
 \subsection{Algorithm}
 
-Note that these assumptions do not touch on issues such as second order derivatives or inequality reasoning. Our algorithm is thus much more primitive than Garp3's. We describe how it works by the following pseudocode:
+Note that these assumptions do not touch on issues such as second order derivatives or inequality reasoning. Our algorithm is thus much more primitive than Garp3's. We describe how it works by the following pseudocode:\\
 
-\begin{algorithm}
+\begin{algorithm}[!h]
 	\caption{Construct State Graph}\label{stategraph}
 	\begin{algorithmic}[1]
 		\Procedure{MakeGraph}{intialState,causalGraph}
@@ -172,7 +189,16 @@ Note that these assumptions do not touch on issues such as second order derivati
 	\end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\textbf{Algorithm 1: makeGraph(initialState,causalGraph)}
+\begin{itemize}
+	\item This is the method that used to create the state graph.
+	\item It takes the \textit{initialState} and \textit{causalGraph} as parameters.
+	\item The \textit{causalGraph} contains information about the entities,  their quantities and the corresponding relationships between them.
+	\item The algorithm loops until we get all possible states by computing the possible states that each state can transition to and add them as children to the corresponding state. 
+	\item The algorithm also checks whether a state has already been generated previously and if it is already present we just add it as the child to the state from which it transitions from.
+\end{itemize}
+
+\begin{algorithm}[!h]
 	\caption{Compute next state transitions}\label{nextstate}
 	\begin{algorithmic}[1]
 		\Procedure{computeNextStates}{currentState,causalGraph}
@@ -197,8 +223,14 @@ Note that these assumptions do not touch on issues such as second order derivati
 		\EndProcedure
 	\end{algorithmic}
 \end{algorithm}
+\textbf{Algorithm 2: computeNextState(currentState,causalGraph)}
+\begin{itemize}
+	\item This is the method that used to generate the possible state transitions from a single node.
+	\item There are three possible updates that can be applied to a state which are: point changes, static changes and interval changes.
+	\item After we get the possible transition states we check whether the states are consistent or not using the function \textit{checkStateConsistency}
+\end{itemize}
 
-\begin{algorithm}
+\begin{algorithm}[!h]
 	\caption{Applying Point Changes}\label{pointchanges}
 	\begin{algorithmic}[1]
 		\Procedure{applyPointChanges}{currentState,causalGraph}
@@ -228,7 +260,13 @@ Note that these assumptions do not touch on issues such as second order derivati
 	\end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\textbf{Algorithm 3: applyPointChanges(currentState,causalGraph)}
+\begin{itemize}
+	\item This method applies magnitude changes of the quantities corresponding to its derivatives. 
+	\item This method also applies potential influence changes by comparing the derivative of the receiving quantity and the magnitude of the causal quantity.
+\end{itemize}
+
+\begin{algorithm}[!h]
 	\caption{Applying Static Changes}\label{staticchanges}
 	\begin{algorithmic}[1]
 		\Procedure{applyStaticChanges}{currentState,causalGraph}
@@ -251,7 +289,13 @@ Note that these assumptions do not touch on issues such as second order derivati
 	\end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+
+\textbf{Algorithm 4: applyStaticChanges(currentState,causalGraph)}
+\begin{itemize}
+	\item This method checks for the proportional relationship and equivalence relationship.
+\end{itemize}
+
+\begin{algorithm}[!h]
 	\caption{Applying Interval Changes}\label{intervalchanges}
 	\begin{algorithmic}[1]
 		\Procedure{applyStaticChanges}{currentState,causalGraph}
@@ -288,11 +332,16 @@ Note that these assumptions do not touch on issues such as second order derivati
 	\end{algorithmic}
 \end{algorithm}
 
-\textcolor{red}{enter pseudocode here}
+\textbf{Algorithm 5: applyIntervalChanges(currentState,causalGraph)}
+\begin{itemize}
+	\item This method indicates the changes that can happen over time interval.
+	\item This method applies the influence relationship and derivative changes and records all possible state transitions from the \textit{currentState}
+	\item This method also applies exogenous change corresponding to the type of exogenous in the \textit{causalGraph} by updating the derivative of the inflow.  
+\end{itemize}
 
 \section{Results}
 
-Which deviations from the benchmark simulations will our modelling choices incur? And do they affect the overall degree to which our algortihm captures the behaviour of the system? 
+Which deviations from the benchmark simulations will our modelling choices incur? And do they affect the overall degree to which our algorithm captures the behaviour of the system? 
 
 The results of our simulations are visualized by the state graph in figure \ref{figure8} as well as the state descriptions in table \ref{table1}. Consistently with the Garp3 simulations we found that the state graphs of Model I and Model II coincide. Our algorithm also resulted in the same end state as the Garp3 implementation, showing that it captured the overall system behaviour well.
 
@@ -308,13 +357,7 @@ However, given the comparative simplicity of our algorithm, comparing our result
 
 
 \begin{figure}
-	\includegraphics{Value_History_Extra}
-	\caption{Value history of Model I \& II (lower part)}
-	\label{figure9}
-\end{figure}
-
-
-\begin{figure}
+	\centering
 	\includegraphics[scale=0.3]{Ok_State_Graph.png}
 	\caption{State graph for Model I and II according to our simulation. }
 	\label{figure8}
@@ -350,7 +393,6 @@ However, given the comparative simplicity of our algorithm, comparing our result
 
 \begin{table}
 	\small
-	\caption{State table of Model I \& II (right of children)}
 	\begin{adjustbox}{center}
 	\begin{tabular}{@{}llllllllllll}
 		\# & Inflow & $\delta$ Inflow & Volume & $\delta$ Volume & Outflow & $\delta$ Outflow & Children & Height & $\delta$ Height & Pressure & $\delta$ Pressure  \\
@@ -374,6 +416,12 @@ However, given the comparative simplicity of our algorithm, comparing our result
 		18 & +      & 0           & Max    & 0           & Max     & 0            & 7        & Max    & 0                                & Max      & 0                                  
 	\end{tabular}
 	\end{adjustbox}
+	\caption{State table of Model I \& II (right of children)}
+	\label{table1}
 \end{table}
+
+\section{Conclusions}
+
+In this project we implemented two models of a simple container system. Using a qualitative reasoning algorithm we explored the time evolution of these models. We found that our algorithm's state graph was well in line with intuition as well as with simulations of more advanced QR-software. In future implementations we would use an event based approach to deal with the immediate termination of second and third round effects. 
 
 \end{document}
