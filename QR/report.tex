@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
+\usepackage{adjustbox}
 \begin{document}
 
 \author{
@@ -293,7 +294,25 @@ Note that these assumptions do not touch on issues such as second order derivati
 
 Which deviations from the benchmark simulations will our modelling choices incur? And do they affect the overall degree to which our algortihm captures the behaviour of the system? 
 
-The results of our simulations are visualized by the state graph in figure \ref{figure8} as well as the state descriptions in table \ref{table1} and \ref{table2}. Consistently with the Garp3 simulations we found that the state graphs of Model I and Model II coincide.
+The results of our simulations are visualized by the state graph in figure \ref{figure8} as well as the state descriptions in table \ref{table1}. Consistently with the Garp3 simulations we found that the state graphs of Model I and Model II coincide. Our algorithm also resulted in the same end state as the Garp3 implementation, showing that it captured the overall system behaviour well.
+
+However, given the comparative simplicity of our algorithm, comparing our results with the benchmarks yields the following divergences:
+
+\begin{itemize}
+	\item \textbf{States 9 and 10-17:} Here $\delta$ Inflow is negative although the inflow has already reached tero. This is excluded by the Garp3 modelling assumption ``Apply quantity space constraints on zero as extreme Value" which we did not implement. However, it has no effects in this model.
+	\item \textbf{States 11-13:} These states do not appear in the Garp3 state graph. The reason is that state 11 is spurious: we have zero inflow and yet maximum volume and positive $\delta$ Volume. This happens since our algorithm does not check for second round effects of influence changes: when Inflow goes to zero this has the immediate second round effect of its influence on $\delta$ Volume becoming 0 thus being outweighed by $I^-$(Outflow, Volume) chaning $\delta$ Volume to 0 (third round effects abound). Instead, our algorithm only applies these second and third round effects step by step in states 12-14 which deterministically follow from 11. 
+	\item  \textbf{State 15:} The same holds for state 15. Note that state 13 in figure \ref{figure9} has a positve $\delta^2$ Volume. This indicates the possibility to go to an equivalent to state 15 of our algorithm. However, this state is inconsistent to Garp3 since the immediate second round effect of $I^-$(Outflow, Volume) prevents transition to this state. Again, this is instead done step by step in two states by our algorithm.
+	\item \textbf{State 16:} For the same reason, the algorithm takes two steps to transition from state 15 to state 17 resulting in the intermediary state 16
+\end{itemize}
+
+
+
+\begin{figure}
+	\includegraphics{Value_History_Extra}
+	\caption{Value history of Model I \& II (lower part)}
+	\label{figure9}
+\end{figure}
+
 
 \begin{figure}
 	\includegraphics[scale=0.3]{Ok_State_Graph.png}
@@ -301,59 +320,60 @@ The results of our simulations are visualized by the state graph in figure \ref{
 	\label{figure8}
 \end{figure}
 
-\begin{table}[]
-	\centering
-	\caption{State table of Model I}
-	\label{table1}
-	\begin{tabular}{llllllll}
-		\# & Inflow & $\delta$ Inflow & Volume & $\delta$ Volume & Outflow & $\delta$ Outflow & Children \\
-		1  & 0      & +               & 0      & 0               & 0       & 0                & 2        \\
-		2  & +      & +               & 0      & +               & 0       & +                & 3        \\
-		3  & +      & +               & +      & +               & +       & +                & 4, 5     \\
-		4  & +      & +               & Max    & +               & Max     & +                & 7        \\
-		5  & +      & 0               & +      & +               & +       & +                & 6, 7, 8  \\
-		6  & +      & 0               & +      & 0               & +       & 0                & 5        \\
-		7  & +      & 0               & Max    & +               & Max     & +                & 10, 18   \\
-		8  & +      & -               & +      & +               & +       & +                & 9, 10    \\
-		9  & 0      & -               & +      & +               & +       & +                & 11, 15   \\
-		10 & +      & -               & Max    & +               & Max     & +                & 11       \\
-		11 & 0      & -               & Max    & +               & Max     & +                & 12       \\
-		12 & 0      & -               & Max    & 0               & Max     & 0                & 13       \\
-		13 & 0      & -               & Max    & -               & Max     & -                & 14       \\
-		14 & 0      & -               & +      & -               & +       & -                & 15, 16   \\
-		15 & 0      & -               & +      & 0               & +       & 0                & 14       \\
-		16 & 0      & -               & 0      & -               & 0       & -                & 17       \\
-		17 & 0      & -               & 0      & 0               & 0       & 0                & End      \\
-		18 & +      & 0               & Max    & 0               & Max     & 0                & 7       
-	\end{tabular}
-\end{table}
+%\begin{table}[]
+	%\centering
+	%\caption{State table of Model I}
+	%\label{table1}
+	%\begin{tabular}{llllllll}
+		%#  & Inflow & $\delta$ Inflow & Volume & $\delta$ Volume & Outflow %& $\delta$ Outflow & Children \\
+		%1  & 0      & +               & 0      & 0               & 0       %& 0                & 2        \\
+		%2  & +      & +               & 0      & +               & 0       %& +                & 3        \\
+		%3  & +      & +               & +      & +               & +       %& +                & 4, 5     \\
+		%4  & +      & +               & Max    & +               & Max     %& +                & 7        \\
+		%5  & +      & 0               & +      & +               & +       %& +                & 6, 7, 8  \\
+		%6  & +      & 0               & +      & 0               & +       %& 0                & 5        \\
+		%7  & +      & 0               & Max    & +               & Max     %& +                & 10, 18   \\
+		%8  & +      & -               & +      & +               & +       %& +                & 9, 10    \\
+		%9  & 0      & -               & +      & +               & +       %& +                & 11, 15   \\
+		%10 & +      & -               & Max    & +               & Max     %& +                & 11       \\
+		%11 & 0      & -               & Max    & +               & Max     %& +                & 12       \\
+		%12 & 0      & -               & Max    & 0               & Max     %& 0                & 13       \\
+		%13 & 0      & -               & Max    & -               & Max     & -                & 14       \\
+		%14 & 0      & -               & +      & -               & +       & -                & 15, 16   \\
+		%15 & 0      & -               & +      & 0               & +       & 0                & 14       \\
+		%16 & 0      & -               & 0      & -               & 0       & -                & 17       \\
+		%17 & 0      & -               & 0      & 0               & 0       & 0                & End      \\
+		%18 & +      & 0               & Max    & 0               & Max     & 0                & 7       
+	%\end{tabular}
+%\end{table}
 
-\begin{table}[]
-	\centering
-	\caption{State table of Model II}
-	\label{table2}
-	\begin{tabular}{llllllllllll}
-		\# & Inflow & $\delta$ Inflow & Height & $\delta$ Height & Pressure & $\delta$ Pressure & Volume & $\delta$ Volume & Outflow & $\delta$ Outflow & Children \\
-		1  & 0      & +               &        &                 &          &                   & 0      & 0               & 0       & 0                & 2        \\
-		2  & +      & +               &        &                 &          &                   & 0      & +               & 0       & +                & 3        \\
-		3  & +      & +               &        &                 &          &                   & +      & +               & +       & +                & 4, 5     \\
-		4  & +      & +               &        &                 &          &                   & Max    & +               & Max     & +                & 7        \\
-		5  & +      & 0               &        &                 &          &                   & +      & +               & +       & +                & 6, 7, 8  \\
-		6  & +      & 0               &        &                 &          &                   & +      & 0               & +       & 0                & 5        \\
-		7  & +      & 0               &        &                 &          &                   & Max    & +               & Max     & +                & 10, 18   \\
-		8  & +      & -               &        &                 &          &                   & +      & +               & +       & +                & 9, 10    \\
-		9  & 0      & -               &        &                 &          &                   & +      & +               & +       & +                & 11, 15   \\
-		10 & +      & -               &        &                 &          &                   & Max    & +               & Max     & +                & 11       \\
-		11 & 0      & -               &        &                 &          &                   & Max    & +               & Max     & +                & 12       \\
-		12 & 0      & -               &        &                 &          &                   & Max    & 0               & Max     & 0                & 13       \\
-		13 & 0      & -               &        &                 &          &                   & Max    & -               & Max     & -                & 14       \\
-		14 & 0      & -               &        &                 &          &                   & +      & -               & +       & -                & 15, 16   \\
-		15 & 0      & -               &        &                 &          &                   & +      & 0               & +       & 0                & 14       \\
-		16 & 0      & -               &        &                 &          &                   & 0      & -               & 0       & -                & 17       \\
-		17 & 0      & -               &        &                 &          &                   & 0      & 0               & 0       & 0                & End      \\
-		18 & +      & 0               &        &                 &          &                   & Max    & 0               & Max     & 0                & 7       
-	\end{tabular}
-\end{table}
 
+\begin{table}
+	\small
+	\caption{State table of Model I \& II (right of children)}
+	\begin{adjustbox}{center}
+	\begin{tabular}{@{}llllllllllll}
+		\# & Inflow & $\delta$ Inflow & Volume & $\delta$ Volume & Outflow & $\delta$ Outflow & Children & Height & $\delta$ Height & Pressure & $\delta$ Pressure  \\
+		1  & 0      & +           & 0      & 0           & 0       & 0            & 2        & 0      & 0                                & 0        & 0                                   \\
+		2  & +      & +           & 0      & +           & 0       & +            & 3        & 0      & +                                & 0        & +                                   \\
+		3  & +      & +           & +      & +           & +       & +            & 4, 5     & +      & +                                & +        & +                                   \\
+		4  & +      & +           & Max    & +           & Max     & +            & 7        & Max    & +                                & Max      & +                                   \\
+		5  & +      & 0           & +      & +           & +       & +            & 6, 7, 8  & +      & +                                & +        & +                                   \\
+		6  & +      & 0           & +      & 0           & +       & 0            & 5        & +      & 0                                & +        & 0                                   \\
+		7  & +      & 0           & Max    & +           & Max     & +            & 10, 18   & Max    & +                                & Max      & +                                   \\
+		8  & +      & -           & +      & +           & +       & +            & 9, 10    & +      & +                                & +        & +                                   \\
+		9  & 0      & -           & +      & +           & +       & +            & 11, 15   & +      & +                                & +        & +                                   \\
+		10 & +      & -           & Max    & +           & Max     & +            & 11       & Max    & +                                & Max      & +                                   \\
+		11 & 0      & -           & Max    & +           & Max     & +            & 12       & Max    & +                                & Max      & +                                   \\
+		12 & 0      & -           & Max    & 0           & Max     & 0            & 13       & Max    & 0                                & Max      & 0                                   \\
+		13 & 0      & -           & Max    & -           & Max     & -            & 14       & Max    & -                                & Max      & -                                   \\
+		14 & 0      & -           & +      & -           & +       & -            & 15, 16   & +      & -                                & +        & -                                   \\
+		15 & 0      & -           & +      & 0           & +       & 0            & 14       & +      & 0                                & +        & 0                                   \\
+		16 & 0      & -           & 0      & -           & 0       & -            & 17       & 0      & 0                                & 0        & 0                                   \\
+		17 & 0      & -           & 0      & 0           & 0       & 0            & End      & 0      & 0                                & 0        & 0                                   \\
+		18 & +      & 0           & Max    & 0           & Max     & 0            & 7        & Max    & 0                                & Max      & 0                                  
+	\end{tabular}
+	\end{adjustbox}
+\end{table}
 
 \end{document}
