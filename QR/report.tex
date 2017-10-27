@@ -350,7 +350,7 @@ Which deviations from the benchmark simulations will our modelling choices incur
 
 The results of our simulations are visualized by the state graph in figure \ref{figure8} as well as the state descriptions in table \ref{table1}. Consistently with the Garp3 simulations we found that the state graphs of Model I and Model II coincide. Our algorithm also resulted in the same end state as the Garp3 implementation, showing that it captured the overall system behaviour well.
 
-However, given the comparative simplicity of our algorithm, comparing our results with the benchmarks yields the following divergences:
+However, given the comparative simplicity of our algorithm, comparing our results with the benchmarks yields the following divergences (for the full trace of the algorithm refer to the attached .txt files):
 
 \begin{itemize}
 	\item \textbf{States 9 and 10-17:} Here $\delta$ Inflow is negative although the inflow has already reached tero. This is excluded by the Garp3 modelling assumption ``Apply quantity space constraints on zero as extreme Value" which we did not implement. However, it has no effects in this model.
