@@ -1,7 +1,6 @@
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
-import random
+#import matplotlib.pyplot as plt
 from enum import Enum, unique
 from typing import Dict, List, Union, Tuple, Optional
 from collections import defaultdict
@@ -87,7 +86,7 @@ class Quantity:
         changed, self.current_magnitude = self.current_magnitude.decrease(self.quantity_space)
         return changed, self.current_magnitude
 
-    def apply_derivative(self) -> bool:
+    def apply_derivative(self) -> Tuple[bool, str]:
         changed = False
         if self.current_derivative > Derivative.ZERO:
             changed, new_value = self.increase_magnitude()
@@ -95,9 +94,10 @@ class Quantity:
         elif self.current_derivative < Derivative.ZERO:
             changed, new_value = self.decrease_magnitude()
 
+        reason = ""
         if changed:
-            print("{} derivate was applied".format(self.name))
-        return changed
+            reason = "{} derivate was applied".format(self.name)
+        return changed, reason
 
     def __str__(self) -> str:
         return "name={}, current_magnitude={}, current_derivative={}".format(self.name, self.current_magnitude,
@@ -150,9 +150,10 @@ class InfluenceRelationship(Relationship):
             else:
                 # I- and source -
                 changed, new_value = self.receiving_party.increase_derivative()
+        reason = ""
         if changed:
-            print("{} was applied".format(self.name))
-        return changed
+            reason = "{} was applied".format(self.name)
+        return changed, reason
 
 
 class ProportionalRelationship(Relationship):
@@ -184,9 +185,10 @@ class ProportionalRelationship(Relationship):
             else:
                 # P- and source -
                 changed, new_value = self.receiving_party.increase_derivative()
+        reason = ""
         if changed:
-            print("{} was applied".format(self.name))
-        return changed
+            reason = "{} was applied".format(self.name)
+        return changed, reason
 
 class EquivalenceRelationship(Relationship):
     def __init__(self, name: str, causal_party: Quantity, receiving_party: Quantity, equivalences: List[QuantityValue]) -> None:
@@ -206,9 +208,10 @@ class EquivalenceRelationship(Relationship):
                 if self.causal_party.current_magnitude != causal_value:
                     self.causal_party.current_magnitude = causal_value
                     changed = True
+        reason = ""
         if changed:
-            print("{} was applied".format(self.name))
-        return changed
+            reason = "{} was applied".format(self.name)
+        return changed, reason
 # Type definition
 State = List[Union[QuantityValue,Derivative]]
 
@@ -236,76 +239,94 @@ class CausalGraph:
                 state_values.append(quantity.current_derivative)
         return state_values
 
-    def apply_point_changes(self, initial_state: State) -> Tuple[bool, State]:
+    def apply_point_changes(self, initial_state: State) -> Tuple[bool, State, List[str]]:
         # Here we apply changes from 0 to something
         changed = False
+        reasons = list()
         # start with applying derivative
         for e_index, entity in enumerate(self.entities):
             for q_index, quantity in enumerate(entity.quantities):
                 if quantity.current_derivative != Derivative.ZERO:
 
                     if quantity.current_magnitude == QuantityValue.ZERO:
-                        changed |= quantity.apply_derivative()
+                        change, reason = quantity.apply_derivative()
+                        if change:
+                            reasons.append(reason)
+                            changed = True
                     if quantity.current_magnitude == QuantityValue.MAX:
-                        changed |= quantity.apply_derivative()
+                        change, reason =quantity.apply_derivative()
+                        if change:
+                            reasons.append(reason)
+                            changed = True
 
         # then we apply potential influence changes which could be pending
         for relationship in self.relationships:
             if type(relationship) == InfluenceRelationship and relationship.receiving_party.current_derivative == Derivative.ZERO:
-                changed |= relationship.apply_relationship()
+                change, reason = relationship.apply_relationship()
+                if change:
+                    reasons.append(reason)
+                    changed = True
         # we go back to the original state
         return_state = self.record_state()
         self.apply_state(initial_state)
-        return changed, return_state
+        return changed, return_state, reasons
 
-    def apply_static_changes(self, initial_state: State) -> Tuple[bool, State]:
+    def apply_static_changes(self, initial_state: State) -> Tuple[bool, State, List[str]]:
         # Here we apply ProportionalRelationship + EquivalenceRelationship
         changed = False
+        reasons = list()
         this_round_changed = True
         while this_round_changed:
             this_round_changed = False
             for relationship in self.relationships:
                 if type(relationship) == ProportionalRelationship:
-                    this_round_changed |= relationship.apply_relationship()
+                    change, reason = relationship.apply_relationship()
+                    if change:
+                        reasons.append(reason)
+                        this_round_changed = True
+                        changed = True
                 if type(relationship) == EquivalenceRelationship:
-                    this_round_changed |= relationship.apply_relationship()
-            changed |= this_round_changed
+                    change, reason = relationship.apply_relationship()
+                    if change:
+                        reasons.append(reason)
+                        this_round_changed = True
+                        changed = True
         # we go back to the original state
         return_state = self.record_state()
         self.apply_state(initial_state)
-        return changed, return_state
+        return changed, return_state, reasons
 
-    def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State]]:
+    def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State], List[str]]:
         # Here we apply InfluenceRelationship + Derivative
         changes = list()
+        reasons = list()
         for relationship in self.relationships:
             if type(relationship) == InfluenceRelationship:
-                changed = relationship.apply_relationship()
+                changed, reason = relationship.apply_relationship()
                 if changed:
-                    print("Possible branch")
+                    reasons.append(reason)
                     changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
         for entity in self.entities:
             for quantity in entity.quantities:
-                changed = quantity.apply_derivative()
+                changed, reason = quantity.apply_derivative()
                 if changed:
-                    print("Possible branch")
+                    reasons.append(reason)
                     changes.append(self.record_state())
                 # we go back to the original state
                 self.apply_state(initial_state)
         changed, state = self.apply_exo_decrease(initial_state)
         if changed:
-            print("Possible branch")
+            reason = "2nd order derivative applied"
+            reasons.append(reason)
             changes.append(state)
             self.apply_state(initial_state)
-        return len(changes) != 0, changes
+        return len(changes) != 0, changes, reasons
 
     def apply_exo_decrease(self, initial_state: State) -> Tuple[bool, State]:
         # we know where it is...
         changed, _ = self.entities[0].quantities[0].decrease_derivative()
-        if changed:
-             print("2nd order derivative applied")
         # we go back to the original state
         return_state = self.record_state()
         self.apply_state(initial_state)
@@ -350,33 +371,40 @@ class CausalGraph:
                         return False, reason
         return True, ""
 
-    def compute_next_states(self, initial_state: State) -> List[State]:
+    def compute_next_states(self, initial_state: State) -> Tuple[List[State], List[List[str]]]:
         self.apply_state(initial_state)
-        changed, new_state_values = self.apply_point_changes(initial_state)
+        complete_reasons = list()
+        changed, new_state_values, reasons = self.apply_point_changes(initial_state)
         if changed:
+            complete_reasons += reasons
             self.apply_state(new_state_values)
-            changed, new_state_values = self.apply_static_changes(new_state_values)
-            return [new_state_values]
+            changed, new_state_values, reasons = self.apply_static_changes(new_state_values)
+            complete_reasons += reasons
+            return [new_state_values], [complete_reasons]
         next_states = list()
-        changed, new_states = self.apply_interval_changes(initial_state)
+        changed, new_states, interval_reasons = self.apply_interval_changes(initial_state)
         if len(new_states) == 0:
             print("No changes")
-        for state in new_states:
+        for state_index, state in enumerate(new_states):
+            reason = interval_reasons[state_index]
             self.apply_state(state)
-            changed, new_state_values = self.apply_static_changes(state)
-            self.apply_state(new_state_values)
-            is_consistent, reason = self.am_consistent(initial_state)
+            changed, extra_state_values, extra_reasons = self.apply_static_changes(state)
+            self.apply_state(extra_state_values)
+            is_consistent, consistency_reason = self.am_consistent(initial_state)
             if is_consistent:
-                next_states.append(new_state_values)
+                next_states.append(extra_state_values)
+                complete_reasons.append([reason] + extra_reasons)
             else:
-                self.print_illegal_state(new_state_values, reason)
-        return next_states
+                self.print_illegal_state(extra_state_values, consistency_reason, [reason] + extra_reasons)
+        return next_states, complete_reasons
 
-    def print_illegal_state(self, new_state_values: State, reason: str) -> None:
-        print("  *************** Inconsistent state ***************")
+    def print_illegal_state(self, new_state_values: State, reason: str, change_reasons: List[str]) -> None:
+        print("    ************* Inconsistent state **************")
+        for change_reason in change_reasons:
+            print("  Attempted change:  {}".format(change_reason))
         print("  Reason:  {}".format(reason))
         StateNode.print_state(new_state_values)
-        print("             ******************************")
+        print("    ******************************")
 
     def __str__(self) -> str:
         value = ""
@@ -392,10 +420,11 @@ class CausalGraph:
 class StateNode(object):
 
     #type: ignore
-    def __init__(self, parent: Optional['StateNode'], number: int, state_values: State) -> None:
+    def __init__(self, parent: Optional['StateNode'], number: int, state_values: State, reasons: List[str]) -> None:
         self.parent = parent
         self.children: List['StateNode'] = list()
         self.number = number
+        self.reasons = reasons
         self.state_values: State = state_values[:]
 
     def add_child(self, new_child: 'StateNode') -> None:
@@ -422,60 +451,42 @@ class StateNode(object):
             value += "    c={}\n".format(child.number)
         return value
 
-    '''def draw_node(self) -> None:
-        """
-        :return: A graphical representation of the current state.
-        """
-        # I'm assuming we draw just the present state here. We have to concatenate it to the graph of the already
-        # given history at a later point when we have all the possible branchings from the past state. I don't
-        # think we need the argument state - the CausalGraph should have all information needed in its entities right?
-        # So I removed it for now.
-        image = Image.new("RGB", (100, 100), "white")
-        draw = ImageDraw.Draw(image)
-        draw.rectangle(((0, 00), (100, 100)), fill="white", outline="green")
-        coordinates = (10, 10)
-        #for node in self.entities:
-            draw.text(coordinates, str(self.state_values) + " " + str(self.current_magnitude), fill="black")
-            coordinates += (0, 20)
-        image.save("output.jpg", "JPEG")
-        return image'''
-
 class State_Graph(object):
 
     def __init__(self, initial_state: State, causal_graph: CausalGraph) -> None:
         # we count from 1
-        self.head: StateNode = StateNode(None, 1, initial_state)
+        self.head: StateNode = StateNode(None, 1, initial_state, [""])
         self.number_nodes: int = 1
         self.states: Dict[str, StateNode] = {"1" : self.head}
         self.causal_graph = causal_graph
 
-    def print_graph(self, states) -> None:
-        G = nx.DiGraph()
-        get_edges=[]
-        get_nodes={}
-        for key in states:
-            for child in states[key].children:
-                get_edges+=[(states[key].number, child.number)]
-            get_nodes[int(key)]=[states[key].number]
-        G.add_edges_from(get_edges)
-
-        #Fix initial node positions for better graphs
-        initial_node_positions={}
-        for node in get_nodes:
-            if node==1:
-                initial_node_positions[1]=(0,0)
-            else:
-                initial_node_positions[node] = ((np.random.uniform(100*(node-1), 100*node)), np.random.uniform(100*(node-1), 100*node))
-
-        fixed_nodes=[1]
-
-        pos = nx.spring_layout(G, pos=initial_node_positions, fixed=fixed_nodes)
-        nodes=nx.draw_networkx_nodes(G, pos, node_color="white", linewidths= 1.0, node_size=1000)
-        nodes.set_edgecolor('black')
-        nx.draw_networkx_labels(G, pos)
-        nx.draw_networkx_edges(G, pos, arrows=True)
-        plt.axis('off')
-        plt.show()
+#    def print_graph(self, states) -> None:
+#        G = nx.DiGraph()
+#        get_edges=[]
+#        get_nodes={}
+#        for key in states:
+#            for child in states[key].children:
+#                get_edges+=[(states[key].number, child.number)]
+#            get_nodes[int(key)]=[states[key].number]
+#        G.add_edges_from(get_edges)
+#
+#        #Fix initial node positions for better graphs
+#        initial_node_positions={}
+#        for node in get_nodes:
+#            if node==1:
+#                initial_node_positions[1]=(0,0)
+#            else:
+#                initial_node_positions[node] = ((np.random.uniform(100*(node-1), 100*node)), np.random.uniform(100*(node-1), 100*node))
+#
+#        fixed_nodes=[1]
+#
+#        pos = nx.spring_layout(G, pos=initial_node_positions, fixed=fixed_nodes)
+#        nodes=nx.draw_networkx_nodes(G, pos, node_color="white", linewidths= 1.0, node_size=1000)
+#        nodes.set_edgecolor('black')
+#        nx.draw_networkx_labels(G, pos)
+#        nx.draw_networkx_edges(G, pos, arrows=True)
+#        plt.axis('off')
+#        plt.show()
 
     def get_next_index(self) -> int:
         self.number_nodes += 1
@@ -485,15 +496,20 @@ class State_Graph(object):
         stack = [self.head]
         while len(stack) != 0:
             current_state = stack.pop()
-            print("================= STATE NUMBER: {} =====================".format(current_state.number))
+            parent_number = 0
+            if current_state.parent != None:
+                parent_number = current_state.parent.number
+            print("============== STATE NUMBER: {} (parent={}) ==============".format(current_state.number, parent_number))
+            for reason in current_state.reasons:
+                print(reason)
             StateNode.print_state(current_state.state_values)
-            print("    ================================================    ".format(current_state.number))
-            next_states = self.causal_graph.compute_next_states(current_state.state_values)
-            for state in next_states:
+            next_states, reasons = self.causal_graph.compute_next_states(current_state.state_values)
+            for state_index, state in enumerate(next_states):
                 exists, number = self.get_state_number(state)
                 if not exists:
-                    new_node = StateNode(current_state, number, state)
+                    new_node = StateNode(current_state, number, state, reasons[state_index])
                     current_state.add_child(new_node)
+                    print("    found child: {}".format(new_node.number))
                     stack.append(new_node)
                     self.states[str(number)] = new_node
                 else:
