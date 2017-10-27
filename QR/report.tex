@@ -33,7 +33,7 @@ Everyday life requires engaging with countless systems of varying complexity. Su
 
 Rather than precise modelling, humans therefore engage in \textit{Qualitative Reasoning} to understand and predict the behaviour of systems surrounding them. Qualitative models are built by using simplifying \textit{assumptions} to construct a simplified ontology of the system including its objects and the causal relations between them as well as discretizing the quantities of the objects and the magnitudes of the relations. Such models are surprisingly powerful in predicting possible system outcomes.
 
-It is threfore arguable that understanding a domain is a function of one's qualitative model of that domain. In this paradigm, human (and machine) learning and teaching can then be understood in terms of building and adapting qualitative models of the world. 
+It is therefore arguable that understanding a domain is a function of one's qualitative model of that domain. In this paradigm, human (and machine) learning and teaching can then be understood in terms of building and adapting qualitative models of the world. 
 
 The computer assisted learning paradigm tries to leverage this approach by developing \textit{Human Level AI} that assists and interacts with the learner in building better qualitative models.
 
@@ -67,7 +67,7 @@ Using these ingredients, depending on one's assumptions, models of varying compl
 	\item Correspondences: Volume(Zero)$\leftrightarrow$Outflow(Zero), Volume(Max)$\leftrightarrow$Outflow(Max)
 \end{itemize}
 
-The ontology above is depicted in figure \ref{fig: figure1}. To study the development of the system we not only need an ontology but also an \textit{initial state} (or \textit{scenario}). figure \ref{figure2} represents the scenario which we aim to implement for Model I. Namely, we assume that inflow and outflow are at zero in the beginning and that the inflow is exogenuously determined by a function taking the form of a positive parabola. I.e. $\delta$Inflow will initially increase but eventually stagnate and start to decrease until it reaches zero.
+The ontology above is depicted in figure \ref{fig: figure1}. To study the development of the system we not only need an ontology but also an \textit{initial state} (or \textit{scenario}). figure \ref{figure2} represents the scenario which we aim to implement for Model I. Namely, we assume that inflow and outflow are at zero in the beginning and that the inflow is exogenously determined by a function taking the form of a positive parabola. I.e. $\delta$Inflow will initially increase but eventually stagnate and start to decrease until it reaches zero.
 
 
 \begin{figure}[!h]
@@ -82,7 +82,7 @@ The ontology above is depicted in figure \ref{fig: figure1}. To study the develo
 \begin{figure}[!h]
 	\centering
 	\includegraphics{Extra_Flow.png}
-	\caption{In the more complex Model II, outflow is no longer determined by volume but by pressure which is in turn determined by the height of the fluid in the container which is proportiional to the volume.}
+	\caption{In the more complex Model II, outflow is no longer determined by volume but by pressure which is in turn determined by the height of the fluid in the container which is proportional to the volume.}
 	\label{figure3}
 \end{figure}
 
@@ -130,12 +130,16 @@ To begin with, we set up Model I and Model II in the QR-software \textit{Garp3} 
 
 \section{Implementation}
 
+\subsection{Environment}
+
+To implement a QR-reasoner for Model I and II we used Python 3.6 including the packages \textit{networkx}, \textit{numpy} and \textit{matplotlib}. To run it use the command line command ``python run\_model.py". Note that uncommenting the graph drawing function may lead to dependency issues. 
+
 \subsection{Modelling Assumptions}
 
 We now set out to recreate the state graphs of Model I and II using a much simpler implementation. Namely, of the simulation preferences described in figure \ref{figure5} we will only implement the following:
 
 
-\textbf{Basic Epsilon Ordering:} Any termination that consists of a point-value changing to an interval is immediate and takes priority over changes that take time such as interval to landmark changes. If more than one immediate terminations is applicable we apply them in the ordering specified in Algorithm \ref{pointchanges}. In this way we divide the termination calculation into two phases \textit{static changes} and \textit{dynamic changes}. Branching can take place only in the latter phase.
+\textbf{Basic Epsilon Ordering:} Any termination that consists of a point-value changing to an interval is immediate and takes priority over changes that take time such as interval to landmark changes. If more than one immediate terminations is applicable we apply them in the ordering specified in Algorithm \ref{pointchanges}. In this way we divide the termination calculation into two phases \textit{intra-state changes} and \textit{inter-state changes}. Branching can take place only in the latter phase.
 
 \textbf{Derivative values are point values:} Note that this entails that proportionalities act immediately. This assumption can be justified by the fact that proportionalities are usually the result of having different descriptions of the same state of a system that are pragmatically useful but ontologically reducible to each other. In our case, consider the water column in the container in Model II: the height of the column, its volume and the pressure in the column are three different yet dependent ways of describing the same state of the system; thus if one of these quantities changes, so do the others by definition. Proportionality here thus merely describes the same change by different names and therefore acts immediately.
 
@@ -161,7 +165,7 @@ After inferring terminations, in a third phase, we check the consistency of the 
 
 \subsection{Algorithm}
 
-Note that these assumptions do not touch on issues such as second order derivatives or inequality reasoning. Our algorithm is thus much more primitive than Garp3's. We describe how it works by the following pseudocode:\\
+Note that these assumptions do not touch on issues such as second order derivatives or inequality reasoning. Our algorithm is thus much more primitive than Garp3's. We describe how it works by the following pseudocode:\\\\
 
 \begin{algorithm}[!h]
 	\caption{Construct State Graph}\label{stategraph}
@@ -191,7 +195,7 @@ Note that these assumptions do not touch on issues such as second order derivati
 
 \textbf{Algorithm 1: makeGraph(initialState,causalGraph)}
 \begin{itemize}
-	\item This is the method that used to create the state graph.
+	\item This is the method that is used to create the state graph.
 	\item It takes the \textit{initialState} and \textit{causalGraph} as parameters.
 	\item The \textit{causalGraph} contains information about the entities,  their quantities and the corresponding relationships between them.
 	\item The algorithm loops until we get all possible states by computing the possible states that each state can transition to and add them as children to the corresponding state. 
@@ -225,8 +229,8 @@ Note that these assumptions do not touch on issues such as second order derivati
 \end{algorithm}
 \textbf{Algorithm 2: computeNextState(currentState,causalGraph)}
 \begin{itemize}
-	\item This is the method that used to generate the possible state transitions from a single node.
-	\item There are three possible updates that can be applied to a state which are: point changes, static changes and interval changes.
+	\item This is the method that is used to generate the possible state transitions from a single node.
+	\item There are three possible updates that can be applied to a state which are: static changes which correspond to intra-state changes as well as point changes and interval changes which correspond to inter-state changes. 
 	\item After we get the possible transition states we check whether the states are consistent or not using the function \textit{checkStateConsistency}
 \end{itemize}
 
@@ -292,7 +296,8 @@ Note that these assumptions do not touch on issues such as second order derivati
 
 \textbf{Algorithm 4: applyStaticChanges(currentState,causalGraph)}
 \begin{itemize}
-	\item This method checks for the proportional relationship and equivalence relationship.
+	\item Checks for proportional relationships.
+	\item Checks for equivalence relationships.
 \end{itemize}
 
 \begin{algorithm}[!h]
@@ -334,9 +339,9 @@ Note that these assumptions do not touch on issues such as second order derivati
 
 \textbf{Algorithm 5: applyIntervalChanges(currentState,causalGraph)}
 \begin{itemize}
-	\item This method indicates the changes that can happen over time interval.
+	\item This method indicates the changes that can happen over a time interval.
 	\item This method applies the influence relationship and derivative changes and records all possible state transitions from the \textit{currentState}
-	\item This method also applies exogenous change corresponding to the type of exogenous in the \textit{causalGraph} by updating the derivative of the inflow.  
+	\item This method also applies exogenous change corresponding to the type of exogenous function in the \textit{causalGraph} by updating the derivative of the inflow.  
 \end{itemize}
 
 \section{Results}
