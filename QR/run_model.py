@@ -4,7 +4,7 @@ import pprint
 
 def main():
 
-    option = input("Do you want the extras to added to the model (yes/no)? ")
+    option = input("Do you want the extras to added to the model (yes/no)? \n")
 
     tap = model.Entity(name="Tap")
     container = model.Entity(name="Container")
@@ -132,10 +132,10 @@ def main():
                                                        model.QuantityValue.ZERO,
                                                        model.Derivative.ZERO],
                                         causal_graph=causal_graph)
-        
+
     states = state_graph.make_graph()
     print(state_graph)
-    state_graph.print_graph(states)
+    #state_graph.print_graph(states)
 
 if __name__ == "__main__":
     sys.exit(main())
