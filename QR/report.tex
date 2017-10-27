@@ -6,6 +6,8 @@
 %\usepackage{apacite}
 \usepackage{caption}
 \usepackage{graphicx}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
 \begin{document}
 
 \author{
@@ -142,6 +144,148 @@ After inferring terminations, in a third phase, we check the consistency of the 
 \subsection{Algorithm}
 
 Note that these assumptions do not touch on issues such as second order derivatives or inequality reasoning. Our algorithm is thus much more primitive than Garp3's. We describe how it works by the following pseudocode:
+
+\begin{algorithm}
+	\caption{Construct State Graph}\label{stategraph}
+	\begin{algorithmic}[1]
+		\Procedure{MakeGraph}{intialState,causalGraph}
+		\State $\textit{stateGraph} \gets \text{graph.addHead}(\textit{initialState})$
+		\State $\textit{stateStack} \gets \text{stack.push}(\textit{initialState})$
+		\While {$\text{stack.length(stateStack)} != 0$} 
+		\State $\textit{currentState} \gets \text{stack.pop}(stateStack)$
+		\State $\textit{nextStates[]} \gets \text{computeNextStates}(currentState,causalGraph)$
+		\For {\textit{index} $\gets$ \textit{0} to length(\textit{nextStates})}
+		\State $\textit{childState} \gets nextStates[index]$
+		\State $\textit{exists} \gets \text{checkStateExists}(state)$
+		\If {$\text{not} \textit{exists}$}
+		\State assignStateNumber(\textit{childState})
+		\State graph.addChild(\textit{stateGraph,currentState,childState})
+		\State stack.push(\textit{stateStack,childState})
+		\Else 
+		\State graph.addChild(\textit{stateGraph,currentState,childState})
+		\EndIf
+		\EndFor
+		\EndWhile
+		\State \Return $stateGraph$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Compute next state transitions}\label{nextstate}
+	\begin{algorithmic}[1]
+		\Procedure{computeNextStates}{currentState,causalGraph}
+		\State $newState \gets \text{NULL}$ 
+		\State $newState \gets$ applyPointChanges($currentState,causalGraph$)
+		\If {newState \text{not NULL}}
+		\State $newState \gets$ applyStaticChanges($newState,causalGraph$)
+		\State \Return $newState$
+		\EndIf
+		\State $newStatesList$[ ]
+		\State $counter \gets 0$
+		\State $newStatesList \gets$ applyIntervalChanges($currentState,causalGraph$)
+		\For {$index \gets 0$ to length($nextStatesList$)} 
+		\State $newState \gets$ applyStaticChanges($newStatesList[i],causalGraph$)
+		\State $isConsistent \gets$ checkStateConsistency($newState$)
+		\If {$isConsistent$}
+		\State $newStatesList[counter] \gets newState$
+		\State counter++
+		\EndIf
+		\EndFor
+		\State \Return $newStatesList$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Applying Point Changes}\label{pointchanges}
+	\begin{algorithmic}[1]
+		\Procedure{applyPointChanges}{currentState,causalGraph}
+		\State $newState \gets currentState$
+		\For {$index1 \gets 0$ to length($causalGraph.entities$)}
+		\For {$index2 \gets 0$ to length($causalGraph.entities[index1].quantaties$)}
+		\If {$newState[index1][index2].derivavtive == 0$}
+		\If {$newState[index1][index2].magnitude == 0$}
+		\State applyDerivative($newState[index1][index2]$)
+		\EndIf
+		\If {$currentState[index1][index2].magnitude == MAX$}
+		\State applyDerivative($newState[index1][index2]$)
+		\EndIf
+		\EndIf
+		\EndFor
+		\EndFor
+		\For {$index1 \gets 0$ to length($causalGraph.relationships$)}
+		\If {$causalGraph.relationships[index1] == "Influence"$}
+		\State $index2,index3 \gets causalGraph.relationship[index1].recievingPartyIndices$
+		\If {$currentState[index2][index3].derivative == 0$}
+		\State applyInfluenceRelationship(newState)
+		\EndIf
+		\EndIf
+		\EndFor
+		\State \Return $newState$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Applying Static Changes}\label{staticchanges}
+	\begin{algorithmic}[1]
+		\Procedure{applyStaticChanges}{currentState,causalGraph}
+		\State $newState \gets currentState$
+		\State $condtion \gets TRUE$
+		\While {$condtion == TRUE$}
+		\For {$index1 \gets 0$ to length($causalGraph.relationships$)}
+		\State $beforeState \gets newState$
+		\If {$causalGraph.relationships[index1] == "Proportional"$}
+		\State applyProportionalRelationship($newState$)
+		\EndIf
+		\If {$causalGraph.relationships[index1] == "Equivalence"$}
+		\State applyEquivalenceRelationship($newState$)
+		\EndIf
+		\State $condition \gets ifDifferent(beforeState,newState)$
+		\EndFor
+		\EndWhile
+		\State \Return $newState$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Applying Interval Changes}\label{intervalchanges}
+	\begin{algorithmic}[1]
+		\Procedure{applyStaticChanges}{currentState,causalGraph}
+		\State $newState \gets currentState$
+		\State $newStatesList$[ ]
+		\State $counter=0$
+		\For {$index1 \gets 0$ to length($causalGraph.relationships$)}
+		\If {$causalGraph.relationships[index1] == "Influence"$}
+		\State applyInfluenceRelationship(newState)
+		\EndIf
+		\If {ifDifferent($nextState,currentState$)}
+		\State $newStatesList[counter] \gets newState$
+		\State $counter++$
+		\EndIf
+		\EndFor
+		\State $newState \gets currentState$
+		\For {$index1 \gets 0$ to length($causalGraph.entities$)}
+		\For {$index2 \gets 0$ to length($causalGraph.entities[index1].quantaties$)}
+		\State applyDerivative($newState[index1][index2]$)
+		\If {ifDifferent($nextState,currentState$)}
+		\State $newStatesList[counter] \gets newState$
+		\State $counter++$
+		\EndIf
+		\EndFor
+		\EndFor
+		\State $newState \gets currentState$
+		\State $newState \gets$ applyExogenous($causalgraph.typeOfExogenous,newState$)
+		\If {ifDifferent($nextState,currentState$)}
+		\State $newStatesList[counter] \gets newState$
+		\State $counter++$
+		\EndIf
+		\State \Return $newStatesList$
+		\EndProcedure
+	\end{algorithmic}
+\end{algorithm}
 
 \textcolor{red}{enter pseudocode here}
 
