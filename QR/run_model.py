@@ -135,6 +135,7 @@ def main():
 
     states = state_graph.make_graph()
     print(state_graph)
+    # uncomment this section to generate a graph
     #state_graph.print_graph(states)
 
 if __name__ == "__main__":

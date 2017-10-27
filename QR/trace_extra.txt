@@ -1,0 +1,384 @@
+Do you want the extras to added to the model (yes/no)? 
+============== STATE NUMBER: 1 (parent=0) ==============
+
+QuantityValue.ZERO, Derivative.POSITIVE
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+    found child: 2
+============== STATE NUMBER: 2 (parent=1) ==============
+inflow derivate was applied - (intra-state change)
+inflow_I+ was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.ZERO, Derivative.POSITIVE
+QuantityValue.ZERO, Derivative.POSITIVE
+QuantityValue.ZERO, Derivative.POSITIVE
+QuantityValue.ZERO, Derivative.POSITIVE
+    found child: 3
+============== STATE NUMBER: 3 (parent=2) ==============
+volume derivate was applied - (intra-state change)
+height derivate was applied - (intra-state change)
+pressure derivate was applied - (intra-state change)
+outflow derivate was applied - (intra-state change)
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+    ************* Inconsistent state **************
+  Attempted change:  outflow_I- was applied - (intra-state change)
+  Attempted change:  volume_height_P+ was applied - (inter-state change)
+  Attempted change:  height_pressure_P+ was applied - (inter-state change)
+  Attempted change:  pressure_outflow_P+ was applied - (inter-state change)
+  Reason:  Illegal state thrown away. I+(A,B) and I-(C,B) and delta A  != delta C then delta B != 0
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+    ******************************
+    found child: 4
+    found child: 5
+============== STATE NUMBER: 5 (parent=3) ==============
+2nd order derivative applied - (intra-state change)
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+    found child: 6
+    found child: 7
+    found child: 8
+============== STATE NUMBER: 8 (parent=5) ==============
+2nd order derivative applied - (intra-state change)
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+    ************* Inconsistent state **************
+  Attempted change:  outflow_I- was applied - (intra-state change)
+  Attempted change:  volume_height_P+ was applied - (inter-state change)
+  Attempted change:  height_pressure_P+ was applied - (inter-state change)
+  Attempted change:  pressure_outflow_P+ was applied - (inter-state change)
+  Reason:  Illegal state thrown away. I+(A,B) and I-(C,B) and delta A  != delta C then delta B != 0
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+    ******************************
+    found child: 9
+    found child: 10
+============== STATE NUMBER: 10 (parent=8) ==============
+volume derivate was applied - (intra-state change)
+volume_height_EQ was applied - (inter-state change)
+height_pressure_EQ was applied - (inter-state change)
+pressure_outflow_EQ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+    ************* Inconsistent state **************
+  Attempted change:  outflow_I- was applied - (intra-state change)
+  Attempted change:  volume_height_P+ was applied - (inter-state change)
+  Attempted change:  height_pressure_P+ was applied - (inter-state change)
+  Attempted change:  pressure_outflow_P+ was applied - (inter-state change)
+  Reason:  Illegal state thrown away. I+(A,B) and I-(C,B) and delta A  != delta C then delta B != 0
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+    ******************************
+    found child: 11
+============== STATE NUMBER: 11 (parent=10) ==============
+inflow derivate was applied - (intra-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+    found child: 12
+============== STATE NUMBER: 12 (parent=11) ==============
+inflow_I+ was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+    found child: 13
+============== STATE NUMBER: 13 (parent=12) ==============
+outflow_I- was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.NEGATIVE
+QuantityValue.MAX, Derivative.NEGATIVE
+    found child: 14
+============== STATE NUMBER: 14 (parent=13) ==============
+volume derivate was applied - (intra-state change)
+height derivate was applied - (intra-state change)
+pressure derivate was applied - (intra-state change)
+outflow derivate was applied - (intra-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.NEGATIVE
+    found child: 15
+    found child: 16
+============== STATE NUMBER: 16 (parent=14) ==============
+volume derivate was applied - (intra-state change)
+volume_height_EQ was applied - (inter-state change)
+height_pressure_EQ was applied - (inter-state change)
+pressure_outflow_EQ was applied - (inter-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.ZERO, Derivative.NEGATIVE
+    found child: 17
+============== STATE NUMBER: 17 (parent=16) ==============
+inflow_I+ was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+QuantityValue.ZERO, Derivative.ZERO
+No changes
+============== STATE NUMBER: 15 (parent=14) ==============
+inflow_I+ was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+============== STATE NUMBER: 9 (parent=8) ==============
+inflow derivate was applied - (intra-state change)
+QuantityValue.ZERO, Derivative.NEGATIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.POSITIVE, Derivative.POSITIVE
+============== STATE NUMBER: 7 (parent=5) ==============
+volume derivate was applied - (intra-state change)
+volume_height_EQ was applied - (inter-state change)
+height_pressure_EQ was applied - (inter-state change)
+pressure_outflow_EQ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+    found child: 18
+============== STATE NUMBER: 18 (parent=7) ==============
+outflow_I- was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+============== STATE NUMBER: 6 (parent=5) ==============
+outflow_I- was applied - (intra-state change)
+volume_height_P+ was applied - (inter-state change)
+height_pressure_P+ was applied - (inter-state change)
+pressure_outflow_P+ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+QuantityValue.POSITIVE, Derivative.ZERO
+============== STATE NUMBER: 4 (parent=3) ==============
+volume derivate was applied - (intra-state change)
+volume_height_EQ was applied - (inter-state change)
+height_pressure_EQ was applied - (inter-state change)
+pressure_outflow_EQ was applied - (inter-state change)
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.POSITIVE
+    ************* Inconsistent state **************
+  Attempted change:  outflow_I- was applied - (intra-state change)
+  Attempted change:  volume_height_P+ was applied - (inter-state change)
+  Attempted change:  height_pressure_P+ was applied - (inter-state change)
+  Attempted change:  pressure_outflow_P+ was applied - (inter-state change)
+  Reason:  Illegal state thrown away. I+(A,B) and I-(C,B) and delta A  != delta C then delta B != 0
+QuantityValue.POSITIVE, Derivative.POSITIVE
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+QuantityValue.MAX, Derivative.ZERO
+    ******************************
+1: (parent=0)
+    m=QuantityValue.ZERO, d=Derivative.POSITIVE
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    c=2
+
+2: (parent=1)
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.ZERO, d=Derivative.POSITIVE
+    m=QuantityValue.ZERO, d=Derivative.POSITIVE
+    m=QuantityValue.ZERO, d=Derivative.POSITIVE
+    m=QuantityValue.ZERO, d=Derivative.POSITIVE
+    c=3
+
+3: (parent=2)
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    c=4
+    c=5
+
+4: (parent=3)
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    c=7
+
+5: (parent=3)
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    c=6
+    c=7
+    c=8
+
+6: (parent=5)
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    c=5
+
+7: (parent=5)
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    c=18
+    c=10
+
+8: (parent=5)
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    c=9
+    c=10
+
+9: (parent=8)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    m=QuantityValue.POSITIVE, d=Derivative.POSITIVE
+    c=15
+    c=11
+
+10: (parent=8)
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    c=11
+
+11: (parent=10)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    m=QuantityValue.MAX, d=Derivative.POSITIVE
+    c=12
+
+12: (parent=11)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    c=13
+
+13: (parent=12)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.NEGATIVE
+    m=QuantityValue.MAX, d=Derivative.NEGATIVE
+    c=14
+
+14: (parent=13)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.NEGATIVE
+    c=15
+    c=16
+
+15: (parent=14)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    c=14
+
+16: (parent=14)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    c=17
+
+17: (parent=16)
+    m=QuantityValue.ZERO, d=Derivative.NEGATIVE
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+    m=QuantityValue.ZERO, d=Derivative.ZERO
+
+18: (parent=7)
+    m=QuantityValue.POSITIVE, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    m=QuantityValue.MAX, d=Derivative.ZERO
+    c=7
+
+

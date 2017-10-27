@@ -1,5 +1,6 @@
-import networkx as nx
 import numpy as np
+# uncomment this section to generate a graph
+#import networkx as nx
 #import matplotlib.pyplot as plt
 from enum import Enum, unique
 from typing import Dict, List, Union, Tuple, Optional
@@ -269,7 +270,7 @@ class CausalGraph:
         # we go back to the original state
         return_state = self.record_state()
         self.apply_state(initial_state)
-        return changed, return_state, reasons
+        return changed, return_state, [reason + " - (intra-state change)" for reason in reasons]
 
     def apply_static_changes(self, initial_state: State) -> Tuple[bool, State, List[str]]:
         # Here we apply ProportionalRelationship + EquivalenceRelationship
@@ -294,7 +295,7 @@ class CausalGraph:
         # we go back to the original state
         return_state = self.record_state()
         self.apply_state(initial_state)
-        return changed, return_state, reasons
+        return changed, return_state, [reason + " - (inter-state change)" for reason in reasons]
 
     def apply_interval_changes(self, initial_state: State) -> Tuple[bool, List[State], List[str]]:
         # Here we apply InfluenceRelationship + Derivative
@@ -322,7 +323,7 @@ class CausalGraph:
             reasons.append(reason)
             changes.append(state)
             self.apply_state(initial_state)
-        return len(changes) != 0, changes, reasons
+        return len(changes) != 0, changes, [reason + " - (intra-state change)" for reason in reasons]
 
     def apply_exo_decrease(self, initial_state: State) -> Tuple[bool, State]:
         # we know where it is...
@@ -460,6 +461,7 @@ class State_Graph(object):
         self.states: Dict[str, StateNode] = {"1" : self.head}
         self.causal_graph = causal_graph
 
+# uncomment this section to generate a graph
 #    def print_graph(self, states) -> None:
 #        G = nx.DiGraph()
 #        get_edges=[]
